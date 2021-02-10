@@ -10,9 +10,9 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 
 ## TODO
 * Movimiento de los enemigos
-    * momias y hechizo (implementar pathfinding)
+    * momias y hechizo (implementar pathfinding).
 * Finalizar el juego:
-    * cargando otro nivel (positvo)
+    * cargando otro nivel (positvo).
 
 ## 20210210.
 * Estados internos para el gameplay y player
