@@ -1,1 +1,44 @@
-mummygo
+# Oh Mummy GO
+Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0) realizado en golang y con la librería gráfica [ebiten](https://ebiten.org/).
+
+## Plataforma de desarrollo.
+* Ubuntu 20.04
+* golang 1.15.8
+* ebiten v1.12.7
+
+# Progreso.
+
+## TODO
+* Movimiento de los enemigos
+    * momias y hechizo (implementar pathfinding)
+* Finalizar el juego:
+    * cargando otro nivel (positvo)
+
+## 20210210.
+* Estados internos para el gameplay y player
+    * carga un nuevo nivel y preparar el escenario (wip).
+    * abandonar el nivel de forma bonita por parte del player (Se queda la pantalla en negro).
+* Se añade funcionalidad para futuros estados de juego
+    * Estado actual: GamePlay
+    * Futuros estados: MainMenu y Credits.
+* Se añade funcionalidad para cuando el player sea alcanzado por una momia y aun tenga vidas sea situado en el punto inicial y durante unos segundo no puede ser comido de nuevo.
+
+## 20210209.
+* Se añade funcionalidad para apertura de tumbas y que se muestren los objetos que hay dentro.
+* Se añade funcionalidad para que la aparición de objetos sea mas bonita a través de estados (muy básico).
+* Se añade funcionalidad para cargar fuentes ttf y mostrarlas en el UI
+* Se recolectan objetos y funcionalidad para el que están destinados (y actualización del UI).
+* Se añade funcionalidad básica de Game Over (Se queda la pantalla en negro).
+* Se añade funcionalidad básica de nivel completado (Se abre la puerta principal).
+
+## 20210208.
+Preparación del proyecto y se añade funcionalidad básica para:
+* Cargar fichero de assets (spriteSheet).
+* Realizar el pintado del panel de juego.
+* Capturar eventos de teclado.
+* Añadir pequeña funcionalidad en la clase jugador y momia.
+
+
+# Recursos.
+## Fonts.
+* [Karmatic-arcade](https://www.1001freefonts.com/karmatic-arcade.font) de [Vic Fieger](https://www.1001freefonts.com/designer-vic-fieger-fontlisting.php)
