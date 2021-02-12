@@ -16,7 +16,7 @@ type GamePlay struct {
 	nextStateID      string
 	spriteSheet      *utils.SpriteSheet
 	stage            *stage.Stage
-	mummies          []*enemies.Mummy
+	enemies          []enemies.IEnemy
 	objects          []*object.CollectableObject
 	player           *player.Player
 	isGameOver       bool //estado
@@ -35,19 +35,19 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet) states.IState {
 
 	g.prepareLevel()
 
-	//Create a UI.
+	//Creamos el UI del juego (TODO: colocar iconos)
 	g.uigame = NewUIGame()
 
-	//Create a stage.
+	//Creamos el escenario.
 	g.stage = stage.NewStage(g.spriteSheet, g)
 
-	//Create a mummies.
-	g.mummies = make([]*enemies.Mummy, 0)
-
-	//Create a collectable objects
+	//Creamos el array de objetos a recoger.
 	g.objects = make([]*object.CollectableObject, 0)
 
-	//Creates the player.
+	//Creamos el array de enemigos.
+	g.enemies = make([]enemies.IEnemy, 0)
+
+	//Creamos al jugador.
 	w, h := ebiten.WindowSize()
 	g.player = player.NewPlayer(g.spriteSheet, g.stage)
 	g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
@@ -68,7 +68,6 @@ func (g *GamePlay) Init() {
 //ProcessEvents procesa los eventos del juego.
 func (g *GamePlay) ProcessEvents() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		//os.Exit(0) //TODO: tenemos que ir a otro estado.
 		g.nextStateID = "menu"
 	}
 
@@ -108,30 +107,36 @@ func (g *GamePlay) Update(dt float64) {
 	}
 
 	//Mummies
-	if len(g.mummies) > 0 {
-		mummiesTmp := make([]*enemies.Mummy, len(g.mummies))
+	if len(g.enemies) > 0 {
+		enemiesTmp := make([]enemies.IEnemy, len(g.enemies))
 		copied := 0
-		for _, mummy := range g.mummies {
-			if g.checkPlayerIsAttackedByMummy(g.player, mummy) {
-				mummy = nil
-				//TODO: Verificar si tenemos pociones
+		for _, enemy := range g.enemies {
+			if g.checkPlayerIsAttackedByEnemy(g.player, enemy) {
 				if g.player.Potions() > 0 {
 					g.player.ConsumePotion()
 				} else {
-					g.player.LostLive()
-					g.isGameOver = g.player.Lives() == 0
-					if !g.isGameOver {
-						w, h := ebiten.WindowSize()
-						g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
+					switch enemy.(type) {
+					case *enemies.Mummy:
+						g.player.LostLive()
+						g.isGameOver = g.player.Lives() == 0
+						if !g.isGameOver {
+							w, h := ebiten.WindowSize()
+							g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
+						}
+						break
+					case *enemies.Spell:
+						g.player.Bewitched()
+						break
 					}
 				}
+				enemy = nil
 			} else {
-				mummy.Update(dt)
-				mummiesTmp[copied] = mummy
+				enemy.Update(dt)
+				enemiesTmp[copied] = enemy
 				copied++
 			}
 		}
-		g.mummies = mummiesTmp[:copied]
+		g.enemies = enemiesTmp[:copied]
 	}
 
 	//Collectable Objects.
@@ -160,7 +165,7 @@ func (g *GamePlay) Update(dt float64) {
 	g.uigame.SetLevel(g.level)
 }
 
-//Draw draws the game.
+//Draw dibuja los elementos del juego.
 func (g *GamePlay) Draw(screen *ebiten.Image) {
 	if g.isGameOver {
 		return
@@ -174,8 +179,8 @@ func (g *GamePlay) Draw(screen *ebiten.Image) {
 
 	g.player.Draw(screen)
 
-	for _, mummy := range g.mummies {
-		mummy.Draw(screen)
+	for _, enemy := range g.enemies {
+		enemy.Draw(screen)
 	}
 
 	g.uigame.Draw(screen)
@@ -194,14 +199,16 @@ func (g *GamePlay) NextState() string {
 func (g *GamePlay) OnCreateObject(t, x, y int) {
 	switch t {
 	case 1: //Mummy
-		mummy := enemies.NewMummy(g.spriteSheet, x, y)
-		g.mummies = append(g.mummies, mummy)
+		mummy := enemies.NewMummy(g.spriteSheet, x, y, g)
+		g.enemies = append(g.enemies, mummy)
 		break
 	case 2, 3, 4: //Potion, Key or Papyre
 		object := object.NewCollectableObject(g.spriteSheet, t, x, y)
 		g.objects = append(g.objects, object)
 		break
 	case 5: //Wizard
+		spell := enemies.NewSpell(g.spriteSheet, x, y, g)
+		g.enemies = append(g.enemies, spell)
 		break
 	}
 }
@@ -214,6 +221,12 @@ func (g *GamePlay) OnPrepreNewLevel() {
 
 	//cargar un nuevo nivel.
 	g.prepareLevel()
+}
+
+//OnRequestPlayerPosition devuelve la posición del player solicitado por un
+//enemigo.
+func (g *GamePlay) OnRequestPlayerPosition() (float64, float64) {
+	return g.player.Position()
 }
 
 /*===========================================================================*/
@@ -234,20 +247,20 @@ func (g *GamePlay) checkCanPickUpObject(player *player.Player, itemObject *objec
 
 }
 
-func (g *GamePlay) checkPlayerIsAttackedByMummy(player *player.Player, mummy *enemies.Mummy) bool {
+func (g *GamePlay) checkPlayerIsAttackedByEnemy(player *player.Player, enemy enemies.IEnemy) bool {
 	if player.IsBlinking() {
 		return false
 	}
 
-	mx, my := mummy.Position()
-	xMummyLog := int(mx+16) / 32
-	yMummyLog := int(my+16) / 32
+	ex, ey := enemy.Position()
+	xEnemyLog := int(ex+16) / 32
+	yEnemyLog := int(ey+16) / 32
 
 	xp, yp := player.Position()
 	xLog := int(xp+16) / 32
 	yLog := int(yp+16) / 32
 
-	return (xMummyLog == xLog) && (yMummyLog == yLog)
+	return (xEnemyLog == xLog) && (yEnemyLog == yLog)
 }
 
 func (g *GamePlay) prepareLevel() {

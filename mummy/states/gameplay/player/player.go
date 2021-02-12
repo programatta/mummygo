@@ -33,6 +33,8 @@ type Player struct {
 	gameplay         interfaces.IGamePlayNotificable
 	blinkingTime     float64
 	isBlinking       bool
+	isBewitched      bool
+	bewitchedTime    float64
 }
 
 //PlayerLeft ...
@@ -152,6 +154,15 @@ func (p *Player) Update(dt float64) {
 		}
 
 		//TODO: Modo hechizado (al ser alcanzado por el hechizo).
+		if p.isBewitched {
+			if p.bewitchedTime > 0 {
+				p.bewitchedTime -= dt
+				dt = dt / 8 //0.002
+			} else {
+				p.bewitchedTime = 0
+				p.isBewitched = false
+			}
+		}
 
 		if p.toY > 0 {
 			//Check collision.
@@ -226,6 +237,10 @@ func (p *Player) Draw(screen *ebiten.Image) {
 
 	if p.isBlinking {
 		op.ColorM.Scale(1.0, 1.0, 1.0, p.alpha)
+	}
+
+	if p.isBewitched {
+		op.ColorM.Scale(1.0, 0.0, 1.0, p.alpha)
 	}
 
 	texture := p.spriteSheet.GetTexture()
@@ -333,6 +348,11 @@ func (p *Player) LostLive() {
 	p.isBlinking = true
 	p.state = playerBlinkLess
 	p.blinkingTime = 5 //segundos.
+
+	if p.isBewitched {
+		p.isBewitched = false
+		p.bewitchedTime = 0
+	}
 }
 
 //Potions devuelve el ńumero de pociones que tiene el jugador.
@@ -355,6 +375,17 @@ func (p *Player) CurrentDir() string {
 //En este estado no afectan colisiones con las momias.
 func (p *Player) IsBlinking() bool {
 	return p.isBlinking
+}
+
+//Bewitched deja parado al jugador durante unos segundos.
+func (p *Player) Bewitched() {
+	p.isBewitched = true
+	p.bewitchedTime = 5 //segundos
+
+	//blinking
+	p.isBlinking = true
+	p.state = playerBlinkLess
+	p.blinkingTime = 5 //segundos.
 }
 
 func (p *Player) checkCollision(x, y int) bool {

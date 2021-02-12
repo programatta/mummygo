@@ -182,7 +182,9 @@ func (s *Stage) generateContentType(rnd *rand.Rand) int {
 	case 4, 9:
 		contentType = 2 //Potion
 		break
-	default: //1,3,6,8,10 //Vacio
+	case 8:
+		contentType = 5 //Hechizo
+	default: //1,3,6,10 //Vacio
 		break
 	}
 

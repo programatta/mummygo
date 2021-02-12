@@ -7,12 +7,13 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 * ebiten v1.12.7
 
 # Progreso.
-
 ## TODO
-* Movimiento de los enemigos
-    * momias y hechizo (implementar pathfinding).
 * Finalizar el juego:
     * cargando otro nivel (positvo).
+
+## 20210211.
+* Se añade funcionalidad para el movimiento de las mominas y sigan al jugador usando un algoritmo A* (pathfinding).
+* Se añade funcionalidad para nuevo enemigo (hechizo) que también hace uso de pathfinding.
 
 ## 20210210.
 * Estados internos para el gameplay y player
@@ -42,3 +43,6 @@ Preparación del proyecto y se añade funcionalidad básica para:
 # Recursos.
 ## Fonts.
 * [Karmatic-arcade](https://www.1001freefonts.com/karmatic-arcade.font) de [Vic Fieger](https://www.1001freefonts.com/designer-vic-fieger-fontlisting.php)
+
+## Código.
+* Algoritmo de pathfinding de [Alex Plugaru](ttps://github.com/xarg/gopathfinding)
