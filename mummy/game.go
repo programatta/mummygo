@@ -65,14 +65,22 @@ func (g *Game) init() {
 	}
 
 	//TODO: cargador de fuentes (igual que hemos hecho con el spritesheet)
+	fontsloader := utils.NewFontsLoader()
+	if err := fontsloader.Load("assets/fonts/ka1.ttf"); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := fontsloader.Load("assets/fonts/BarcadeBrawl.ttf"); err != nil {
+		log.Fatal(err)
+	}
 
 	//Preparamos la maquina de estados de la aplicación.
 	g.stateMgr = states.NewStateMgr()
 
 	//Añadimos los estados de juego.
-	g.stateMgr.AddState("menu", menu.NewMenu())
-	g.stateMgr.AddState("credits", credits.NewCredits())
-	g.stateMgr.AddState("gameplay", gameplay.NewGamePlay(g.spriteSheet))
+	g.stateMgr.AddState("menu", menu.NewMenu(fontsloader))
+	g.stateMgr.AddState("credits", credits.NewCredits(fontsloader))
+	g.stateMgr.AddState("gameplay", gameplay.NewGamePlay(g.spriteSheet, fontsloader))
 
 	//Establecemos el estado actual.
 	g.currentState = g.stateMgr.GetState("menu")

@@ -5,6 +5,7 @@ type IGamePlayNotificable interface {
 	OnCreateObject(t, x, y int)
 	OnPrepreNewLevel()
 	OnRequestPlayerPosition() (float64, float64)
+	OnScoreByStep()
 }
 
 //IStageNotificable ...

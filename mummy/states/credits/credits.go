@@ -6,17 +6,21 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/programatta/mummygo/states"
+	"github.com/programatta/mummygo/utils"
 )
 
 //Credits contiene la funcionalidad del estado que muestra los creditos.
 type Credits struct {
 	nextStateID string
+	uicredits   *UICredits
 }
 
 //NewCredits es un contructor
-func NewCredits() states.IState {
+func NewCredits(fontsloader *utils.FontsLoader) states.IState {
 	c := &Credits{}
 	c.nextStateID = "credits"
+
+	c.uicredits = NewUICredits(fontsloader)
 	return c
 }
 
@@ -43,7 +47,8 @@ func (c *Credits) Update(dt float64) {
 
 //Draw draws the game.
 func (c *Credits) Draw(screen *ebiten.Image) {
-	screen.Fill(color.NRGBA{0x00, 0x40, 0x80, 0xff})
+	screen.Fill(color.NRGBA{0xCE, 0x9C, 0x72, 0xff})
+	c.uicredits.Draw(screen)
 }
 
 //NextState ...

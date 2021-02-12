@@ -24,10 +24,11 @@ type GamePlay struct {
 	playerLeaveLevel bool //estado
 	uigame           *UIGame
 	level            int
+	score            int
 }
 
 //NewGamePlay es el constructor
-func NewGamePlay(spriteSheet *utils.SpriteSheet) states.IState {
+func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader) states.IState {
 	g := &GamePlay{}
 
 	g.nextStateID = "gameplay"
@@ -36,7 +37,7 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet) states.IState {
 	g.prepareLevel()
 
 	//Creamos el UI del juego (TODO: colocar iconos)
-	g.uigame = NewUIGame()
+	g.uigame = NewUIGame(fontsloader)
 
 	//Creamos el escenario.
 	g.stage = stage.NewStage(g.spriteSheet, g)
@@ -114,6 +115,8 @@ func (g *GamePlay) Update(dt float64) {
 			if g.checkPlayerIsAttackedByEnemy(g.player, enemy) {
 				if g.player.Potions() > 0 {
 					g.player.ConsumePotion()
+					//Matamos una momia 125 puntos.
+					g.score += 125
 				} else {
 					switch enemy.(type) {
 					case *enemies.Mummy:
@@ -145,10 +148,21 @@ func (g *GamePlay) Update(dt float64) {
 		copied := 0
 		for _, object := range g.objects {
 			if g.checkCanPickUpObject(g.player, object) {
+				//Por cada objeto cogido damos puntos.
+				if object.TypeObject() == 3 || object.TypeObject() == 4 {
+					//Por la llave y el papiro 100 puntos.
+					g.score += 100
+				} else {
+					//las pociones 35
+					g.score += 35
+				}
+
 				g.player.AddObject(object)
 				if g.player.HasKeyAndPapyre() {
 					g.stage.OpenMainDoor()
 					g.isNextLevel = true
+					//Por completar el nivel incrementamos 500 puntos.
+					g.score += 500
 				}
 				object = nil
 			} else {
@@ -163,6 +177,7 @@ func (g *GamePlay) Update(dt float64) {
 	g.uigame.SetLives(g.player.Lives())
 	g.uigame.SetPotions(g.player.Potions())
 	g.uigame.SetLevel(g.level)
+	g.uigame.SetScore(g.score)
 }
 
 //Draw dibuja los elementos del juego.
@@ -211,6 +226,9 @@ func (g *GamePlay) OnCreateObject(t, x, y int) {
 		g.enemies = append(g.enemies, spell)
 		break
 	}
+
+	//Por cada tumba abierta incrementamos 20 puntos.
+	g.score += 20
 }
 
 //OnPrepreNewLevel indica que el player ha abandonado el nivel por la puerta
@@ -227,6 +245,11 @@ func (g *GamePlay) OnPrepreNewLevel() {
 //enemigo.
 func (g *GamePlay) OnRequestPlayerPosition() (float64, float64) {
 	return g.player.Position()
+}
+
+//OnScoreByStep establece puntos por cada paso dado en celdas vacias.
+func (g *GamePlay) OnScoreByStep() {
+	g.score += 5
 }
 
 /*===========================================================================*/

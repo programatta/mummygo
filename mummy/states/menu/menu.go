@@ -7,17 +7,22 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/programatta/mummygo/states"
+	"github.com/programatta/mummygo/utils"
 )
 
 //Menu contiene la funcionalidad para gestionra el menu principal del juego
 type Menu struct {
 	nextStateID string
+	uimenu      *UIMenu
 }
 
 //NewMenu es un contructor
-func NewMenu() states.IState {
+func NewMenu(fontsloader *utils.FontsLoader) states.IState {
 	m := &Menu{}
 	m.nextStateID = "menu"
+
+	//Creamos el UI del juego (TODO: colocar iconos)
+	m.uimenu = NewUIMenu(fontsloader)
 	return m
 }
 
@@ -53,6 +58,7 @@ func (m *Menu) Update(dt float64) {
 //Draw draws the game.
 func (m *Menu) Draw(screen *ebiten.Image) {
 	screen.Fill(color.NRGBA{0xCE, 0x9C, 0x72, 0xff})
+	m.uimenu.Draw(screen)
 }
 
 //NextState ...

@@ -7,6 +7,7 @@ type Animation struct {
 	currentFrame int
 }
 
+//NewAnimation es el constructor.
 func NewAnimation() *Animation {
 	anim := &Animation{}
 

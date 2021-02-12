@@ -11,6 +11,12 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 * Finalizar el juego:
     * cargando otro nivel (positvo).
 
+## 20210212.
+* Se añade funcionalidad para un cargador de fuentes.
+* Pequeña refactorización.
+* Se añade funconalidad para los estado de Menu Principal y Créditos
+* Pequeña funcionalidad para conteo de puntos.
+
 ## 20210211.
 * Se añade funcionalidad para el movimiento de las mominas y sigan al jugador usando un algoritmo A* (pathfinding).
 * Se añade funcionalidad para nuevo enemigo (hechizo) que también hace uso de pathfinding.
@@ -42,6 +48,7 @@ Preparación del proyecto y se añade funcionalidad básica para:
 
 # Recursos.
 ## Fonts.
+* [Barcade-brawl]https://www.fontspace.com/barcade-brawl-font-f31534) de [Pixel Kitchen](https://www.fontspace.com/pixel-kitchen)
 * [Karmatic-arcade](https://www.1001freefonts.com/karmatic-arcade.font) de [Vic Fieger](https://www.1001freefonts.com/designer-vic-fieger-fontlisting.php)
 
 ## Código.

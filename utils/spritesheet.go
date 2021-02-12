@@ -69,6 +69,8 @@ type tsize struct {
 	W int `json:"w"`
 	H int `json:"h"`
 }
+
+//Rect contiene la posición X e Y y el ancho y alto del sprite
 type Rect struct {
 	tsize
 	X int `json:"x"`

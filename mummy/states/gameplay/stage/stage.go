@@ -156,7 +156,10 @@ func (s *Stage) GetTypeAt(x, y int) int {
 
 //SetTypeAt ...
 func (s *Stage) SetTypeAt(x, y, t int) {
-	s.logicMap[y][x] = t
+	if s.logicMap[y][x] == 0 {
+		s.logicMap[y][x] = t
+		s.gameplay.OnScoreByStep()
+	}
 }
 
 //DebugOpenTombs ...

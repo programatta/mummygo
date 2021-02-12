@@ -1,15 +1,12 @@
 package gameplay
 
 import (
-	"bufio"
 	"fmt"
 	"image/color"
-	"log"
-	"os"
 
-	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/text"
+	"github.com/programatta/mummygo/utils"
 	"golang.org/x/image/font"
 )
 
@@ -19,43 +16,14 @@ type UIGame struct {
 	lives      int
 	potions    int
 	level      int
+	score      int
 }
 
 //NewUIGame is a constructor
-func NewUIGame() *UIGame {
+func NewUIGame(fontloader *utils.FontsLoader) *UIGame {
 	ui := &UIGame{}
 
-	f, e := os.Open("assets/fonts/ka1.ttf")
-	if e != nil {
-		log.Fatal(e)
-	}
-	reader := bufio.NewReader(f)
-
-	fontData := make([]byte, 0)
-	var data []byte
-	data = make([]byte, 10240)
-	for {
-		n, err := reader.Read(data)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fontData = append(fontData, data...)
-		if n < 10240 {
-			break
-		}
-	}
-	ttfont, err := truetype.Parse(fontData)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	const dpi = 72
-	ui.arcadeFont = truetype.NewFace(ttfont, &truetype.Options{
-		Size:    fontSize,
-		DPI:     dpi,
-		Hinting: font.HintingFull,
-	})
-
+	ui.arcadeFont = fontloader.GetFont("BarcadeBrawl.ttf", 72, 12)
 	return ui
 }
 
@@ -74,12 +42,18 @@ func (ui *UIGame) SetLevel(level int) {
 	ui.level = level
 }
 
-//Draw ...
-func (ui *UIGame) Draw(screen *ebiten.Image) {
-	uistring := fmt.Sprintf("Lives:%02d  Potions:%02d  Level:%02d", ui.lives, ui.potions, ui.level)
-
-	screenWidth, screenHeight := screen.Size()
-	text.Draw(screen, uistring, ui.arcadeFont, (screenWidth - len(uistring)*int(fontSize)), screenHeight-int(fontSize/2), color.Black)
+//SetScore ...
+func (ui *UIGame) SetScore(score int) {
+	ui.score = score
 }
 
-const fontSize float64 = 18
+//Draw ...
+func (ui *UIGame) Draw(screen *ebiten.Image) {
+	uistring := fmt.Sprintf("Lives:%02d Potions:%d Level:%02d Score:%05d ", ui.lives, ui.potions, ui.level, ui.score)
+
+	fontSize := 12
+	screenWidth, screenHeight := screen.Size()
+	x := (screenWidth - len(uistring)*fontSize) / 2
+	y := screenHeight - fontSize
+	text.Draw(screen, uistring, ui.arcadeFont, x, y, color.Black)
+}
