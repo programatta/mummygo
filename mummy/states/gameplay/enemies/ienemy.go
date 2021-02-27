@@ -7,4 +7,5 @@ type IEnemy interface {
 	Update(dt float64)
 	Draw(screen *ebiten.Image)
 	Position() (float64, float64)
+	Death()
 }

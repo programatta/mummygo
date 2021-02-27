@@ -12,6 +12,8 @@ import (
 //Player ...
 type Player struct {
 	spriteSheet      *utils.SpriteSheet
+	soundmgr         *utils.SoundMgr
+	stage            interfaces.IStageNotificable
 	animations       map[string]*utils.Animation
 	currentDir       string
 	posX             float64
@@ -21,7 +23,6 @@ type Player struct {
 	toX              int
 	toY              int
 	currentFrameData utils.Rect
-	stage            interfaces.IStageNotificable
 	potions          int
 	lives            int
 	hasKey           bool
@@ -50,10 +51,11 @@ const PlayerUp int = 2
 const PlayerDown int = 3
 
 //NewPlayer is a constructor.
-func NewPlayer(spriteSheet *utils.SpriteSheet, stage interfaces.IStageNotificable) *Player {
+func NewPlayer(spriteSheet *utils.SpriteSheet, soundmgr *utils.SoundMgr, stage interfaces.IStageNotificable) *Player {
 	player := &Player{}
 
 	player.spriteSheet = spriteSheet
+	player.soundmgr = soundmgr
 	player.stage = stage
 
 	//Animations.
@@ -96,11 +98,24 @@ func NewPlayer(spriteSheet *utils.SpriteSheet, stage interfaces.IStageNotificabl
 	return player
 }
 
+var lptmp = utils.Rect{}
+
 //Update updates a player logic
 func (p *Player) Update(dt float64) {
 	if p.toX > 0 || p.toY > 0 {
 		p.animations[p.currentDir].UpdateFrame()
 		p.currentFrameData = p.animations[p.currentDir].GetFrame()
+		stepPlayer := p.soundmgr.Sound("playerstep.wav")
+		if p.currentFrameData != lptmp {
+			go func() {
+				stepPlayer.Play()
+			}()
+			lptmp = p.currentFrameData
+		} else {
+			if !stepPlayer.IsPlaying() {
+				stepPlayer.Rewind()
+			}
+		}
 	} else {
 		p.currentFrameData = p.animations[p.currentDir].GetFrameIndex(1)
 	}
@@ -125,6 +140,7 @@ func (p *Player) Update(dt float64) {
 				p.state = playerLeftLevel
 			}
 		} else if p.state == playerLeftLevel {
+			p.state = playerReadyToPlayLevel
 			p.gameplay.OnPrepreNewLevel()
 		}
 	} else {
@@ -353,6 +369,10 @@ func (p *Player) LostLive() {
 		p.isBewitched = false
 		p.bewitchedTime = 0
 	}
+
+	playerDeathPlayer := p.soundmgr.Sound("playerdeath.wav")
+	playerDeathPlayer.Rewind()
+	playerDeathPlayer.Play()
 }
 
 //Potions devuelve el ńumero de pociones que tiene el jugador.
@@ -381,6 +401,11 @@ func (p *Player) IsBlinking() bool {
 func (p *Player) Bewitched() {
 	p.isBewitched = true
 	p.bewitchedTime = 5 //segundos
+
+	//nos golpea el hechizo
+	spellPlayer := p.soundmgr.Sound("spell.wav")
+	spellPlayer.Rewind()
+	spellPlayer.Play()
 
 	//blinking
 	p.isBlinking = true
@@ -434,9 +459,10 @@ func (p *Player) updateMap(x, y float64, dir string) {
 type tplayerState int
 
 const (
-	playerHiding    tplayerState = tplayerState(0)
-	playerLeaving   tplayerState = tplayerState(1)
-	playerLeftLevel tplayerState = tplayerState(2)
-	playerBlinkLess tplayerState = tplayerState(3)
-	playerBlinkMore tplayerState = tplayerState(4)
+	playerHiding           tplayerState = tplayerState(0)
+	playerLeaving          tplayerState = tplayerState(1)
+	playerLeftLevel        tplayerState = tplayerState(2)
+	playerBlinkLess        tplayerState = tplayerState(3)
+	playerBlinkMore        tplayerState = tplayerState(4)
+	playerReadyToPlayLevel tplayerState = tplayerState(5)
 )

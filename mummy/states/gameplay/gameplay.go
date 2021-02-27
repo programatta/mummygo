@@ -15,6 +15,7 @@ import (
 type GamePlay struct {
 	nextStateID      string
 	spriteSheet      *utils.SpriteSheet
+	soundmgr         *utils.SoundMgr
 	stage            *stage.Stage
 	enemies          []enemies.IEnemy
 	objects          []*object.CollectableObject
@@ -28,11 +29,12 @@ type GamePlay struct {
 }
 
 //NewGamePlay es el constructor
-func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader) states.IState {
+func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader, soundmgr *utils.SoundMgr) states.IState {
 	g := &GamePlay{}
 
 	g.nextStateID = "gameplay"
 	g.spriteSheet = spriteSheet
+	g.soundmgr = soundmgr
 
 	g.prepareLevel()
 
@@ -40,7 +42,7 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader)
 	g.uigame = NewUIGame(fontsloader)
 
 	//Creamos el escenario.
-	g.stage = stage.NewStage(g.spriteSheet, g)
+	g.stage = stage.NewStage(g.spriteSheet, g.soundmgr, g)
 
 	//Creamos el array de objetos a recoger.
 	g.objects = make([]*object.CollectableObject, 0)
@@ -50,7 +52,7 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader)
 
 	//Creamos al jugador.
 	w, h := ebiten.WindowSize()
-	g.player = player.NewPlayer(g.spriteSheet, g.stage)
+	g.player = player.NewPlayer(g.spriteSheet, g.soundmgr, g.stage)
 	g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
 	g.player.SetLives(3)
 
@@ -94,6 +96,13 @@ func (g *GamePlay) ProcessEvents() {
 
 //Update actualiza la lógica del juego.
 func (g *GamePlay) Update(dt float64) {
+	ambiencePlayer := g.soundmgr.Sound("game.wav")
+	if ambiencePlayer.IsPlaying() {
+		ambiencePlayer.Play()
+	} else {
+		ambiencePlayer.Rewind()
+		ambiencePlayer.Play()
+	}
 
 	g.stage.Update(dt)
 	g.player.Update(dt)
@@ -115,6 +124,7 @@ func (g *GamePlay) Update(dt float64) {
 			if g.checkPlayerIsAttackedByEnemy(g.player, enemy) {
 				if g.player.Potions() > 0 {
 					g.player.ConsumePotion()
+					enemy.Death()
 					//Matamos una momia 125 puntos.
 					g.score += 125
 				} else {
@@ -156,6 +166,7 @@ func (g *GamePlay) Update(dt float64) {
 					//las pociones 35
 					g.score += 35
 				}
+				object.PickedUp()
 
 				g.player.AddObject(object)
 				if g.player.HasKeyAndPapyre() {
@@ -183,6 +194,11 @@ func (g *GamePlay) Update(dt float64) {
 //Draw dibuja los elementos del juego.
 func (g *GamePlay) Draw(screen *ebiten.Image) {
 	if g.isGameOver {
+		gos := g.soundmgr.Sound("gameover.wav")
+		if !gos.IsPlaying() {
+			gos.Rewind()
+			gos.Play()
+		}
 		return
 	}
 
@@ -214,15 +230,15 @@ func (g *GamePlay) NextState() string {
 func (g *GamePlay) OnCreateObject(t, x, y int) {
 	switch t {
 	case 1: //Mummy
-		mummy := enemies.NewMummy(g.spriteSheet, x, y, g)
+		mummy := enemies.NewMummy(g.spriteSheet, g.soundmgr, x, y, g)
 		g.enemies = append(g.enemies, mummy)
 		break
 	case 2, 3, 4: //Potion, Key or Papyre
-		object := object.NewCollectableObject(g.spriteSheet, t, x, y)
+		object := object.NewCollectableObject(g.spriteSheet, g.soundmgr, t, x, y)
 		g.objects = append(g.objects, object)
 		break
 	case 5: //Wizard
-		spell := enemies.NewSpell(g.spriteSheet, x, y, g)
+		spell := enemies.NewSpell(g.spriteSheet, g.soundmgr, x, y, g)
 		g.enemies = append(g.enemies, spell)
 		break
 	}
@@ -235,8 +251,17 @@ func (g *GamePlay) OnCreateObject(t, x, y int) {
 //principal y procedemos a preparar otro nivel.
 func (g *GamePlay) OnPrepreNewLevel() {
 	//TODO: de momento para ver que funciona el ciclo.
-	g.isGameOver = true
+	//g.isGameOver = true
 
+	ch := make(chan bool)
+	go func(ch chan bool) {
+		levelup := g.soundmgr.Sound("levelup.wav")
+		levelup.Rewind()
+		levelup.Play()
+		ch <- true
+	}(ch)
+
+	<-ch
 	//cargar un nuevo nivel.
 	g.prepareLevel()
 }
@@ -287,7 +312,7 @@ func (g *GamePlay) checkPlayerIsAttackedByEnemy(player *player.Player, enemy ene
 }
 
 func (g *GamePlay) prepareLevel() {
-	g.level++
+	//g.level++
 
 	//TODO: cargar datos para el nivel.
 }

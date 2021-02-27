@@ -12,6 +12,7 @@ import (
 //Mummy ...
 type Mummy struct {
 	spriteSheet *utils.SpriteSheet
+	soundmgr    *utils.SoundMgr
 	posX, posY  float64
 	gameplay    interfaces.IGamePlayNotificable
 	animations  map[string]*utils.Animation
@@ -26,10 +27,11 @@ type Mummy struct {
 }
 
 //NewMummy es el constructor.
-func NewMummy(spriteSheet *utils.SpriteSheet, x, y int, gameplay interfaces.IGamePlayNotificable) IEnemy {
+func NewMummy(spriteSheet *utils.SpriteSheet, soundmgr *utils.SoundMgr, x, y int, gameplay interfaces.IGamePlayNotificable) IEnemy {
 	mummy := &Mummy{}
 
 	mummy.spriteSheet = spriteSheet
+	mummy.soundmgr = soundmgr
 	mummy.posX = float64(x)
 	mummy.posY = float64(y)
 	mummy.gameplay = gameplay
@@ -107,6 +109,14 @@ func (m *Mummy) Position() (float64, float64) {
 	return m.posX, m.posY
 }
 
+//Death emite un sonido de muerte de la momia cuando lo indica el gameplay.
+func (m *Mummy) Death() {
+	//matamos momia
+	mummydeathPlayer := m.soundmgr.Sound("mummydeath.wav")
+	mummydeathPlayer.Rewind()
+	mummydeathPlayer.Play()
+}
+
 /*===========================================================================*/
 /*                               Private Section                             */
 /*===========================================================================*/
@@ -157,6 +167,13 @@ func (m *Mummy) doPresentation(dt float64) {
 	} else if m.state == enemyLeaving {
 		if m.posY < m.toY {
 			m.posY = m.posY + 32*dt
+
+			mummyshow := m.soundmgr.Sound("mummyleave.wav")
+			if !mummyshow.IsPlaying() {
+				mummyshow.Rewind()
+				mummyshow.Play()
+			}
+
 		} else if m.posY >= m.toY {
 			m.posY = m.toY
 			m.toY = 0
@@ -172,6 +189,13 @@ func (m *Mummy) doIA() {
 		graph := pathfinding.NewGraph(mapData)
 		m.nodesPath = pathfinding.Astar(graph)
 		m.state = enemyNextStep
+
+		mummygrowl := m.soundmgr.Sound("mummygrowl.wav")
+		if !mummygrowl.IsPlaying() {
+			mummygrowl.Rewind()
+			mummygrowl.Play()
+		}
+
 	} else if m.state == enemyNextStep {
 		if len(m.nodesPath) == 0 {
 			m.state = enemyLookingfor

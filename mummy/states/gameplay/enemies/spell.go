@@ -2,6 +2,7 @@ package enemies
 
 import (
 	"image"
+	"time"
 
 	"github.com/hajimehoshi/ebiten"
 	"github.com/programatta/mummygo/mummy/states/gameplay/interfaces"
@@ -12,6 +13,7 @@ import (
 //Spell contiene la funcionalidad del hechizo.
 type Spell struct {
 	spriteSheet *utils.SpriteSheet
+	soundmgr    *utils.SoundMgr
 	posX, posY  float64
 	gameplay    interfaces.IGamePlayNotificable
 	state       tenemyState
@@ -26,10 +28,11 @@ type Spell struct {
 }
 
 //NewSpell es el constructor.
-func NewSpell(spriteSheet *utils.SpriteSheet, x, y int, gameplay interfaces.IGamePlayNotificable) IEnemy {
+func NewSpell(spriteSheet *utils.SpriteSheet, soundmgr *utils.SoundMgr, x, y int, gameplay interfaces.IGamePlayNotificable) IEnemy {
 	spell := &Spell{}
 
 	spell.spriteSheet = spriteSheet
+	spell.soundmgr = soundmgr
 	spell.posX = float64(x)
 	spell.posY = float64(y)
 	spell.gameplay = gameplay
@@ -73,6 +76,15 @@ func (s *Spell) Draw(screen *ebiten.Image) {
 //Position devuelve las coordenadas X e Y del hechizo.
 func (s *Spell) Position() (float64, float64) {
 	return s.posX, s.posY
+}
+
+//Death emite un sonido de muerte de la momia cuando lo indica el gameplay.
+func (s *Spell) Death() {
+	//matamos el hechizo
+	spelldeathPlayer := s.soundmgr.Sound("spelldeath.wav")
+	spelldeathPlayer.Rewind()
+	spelldeathPlayer.Seek(600 * time.Millisecond)
+	spelldeathPlayer.Play()
 }
 
 /*===========================================================================*/

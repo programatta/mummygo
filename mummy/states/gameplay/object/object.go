@@ -10,6 +10,7 @@ import (
 //CollectableObject ...
 type CollectableObject struct {
 	spriteSheet *utils.SpriteSheet
+	soundmgr    *utils.SoundMgr
 	typeObject  int
 	posX, posY  float64
 	sc          float64
@@ -19,9 +20,10 @@ type CollectableObject struct {
 }
 
 //NewCollectableObject is a constructor
-func NewCollectableObject(spriteSheet *utils.SpriteSheet, t, x, y int) *CollectableObject {
+func NewCollectableObject(spriteSheet *utils.SpriteSheet, soundmgr *utils.SoundMgr, t, x, y int) *CollectableObject {
 	co := &CollectableObject{}
 	co.spriteSheet = spriteSheet
+	co.soundmgr = soundmgr
 	co.typeObject = t
 	co.posX = float64(x)
 	co.posY = float64(y)
@@ -52,6 +54,22 @@ func (co *CollectableObject) Update(dt float64) {
 			co.posY = co.toY
 			co.toY = 0
 			co.state = objBlinkLess
+
+			if co.typeObject == 2 {
+				//Pocion
+				potionshow := co.soundmgr.Sound("potionleave.wav")
+				if !potionshow.IsPlaying() {
+					potionshow.Rewind()
+					potionshow.Play()
+				}
+			} else {
+				//Llave y papiro.
+				itemshow := co.soundmgr.Sound("itemleave.wav")
+				if !itemshow.IsPlaying() {
+					itemshow.Rewind()
+					itemshow.Play()
+				}
+			}
 		}
 	} else if co.state == objBlinkLess {
 		if co.alpha > 0.4 {
@@ -108,6 +126,21 @@ func (co *CollectableObject) TypeObject() int {
 //Position devuelve las coordenadas X e Y del objeto.
 func (co *CollectableObject) Position() (float64, float64) {
 	return co.posX, co.posY
+}
+
+//PickedUp reproduce un sonido cuando el gameplay le informa de que ha sido cogido.
+func (co *CollectableObject) PickedUp() {
+	if co.typeObject == 2 {
+		//Pocion.
+		potionPlayer := co.soundmgr.Sound("potiondrink.wav")
+		potionPlayer.Rewind()
+		potionPlayer.Play()
+	} else {
+		//Llave y papiro.
+		itemPlayer := co.soundmgr.Sound("pickupitem.wav")
+		itemPlayer.Rewind()
+		itemPlayer.Play()
+	}
 }
 
 type tobjectState int

@@ -8,8 +8,32 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 
 # Progreso.
 ## TODO
+* FX hechizo saliendo
 * Finalizar el juego:
     * cargando otro nivel (positvo).
+
+## 20210218.
+* Error en audio (necesita installar alsa)
+~~~
+$sudo apt install libasound2-dev
+~~~
+
+* Se añade funcionalidad para un cargador de sonidos (de momento wav).
+* Se añaden sonidos:
+    * de fondo en el gameplay
+    * apertura de puerta en la tumba
+    * apertura de puerta principal
+    * pasos del jugador
+    * muerte del judagor
+    * momia saliendo
+    * momia gruñendo
+    * momia muriendo
+    * hechizo golpeando al jugador
+    * hechizo sin efecto al golpear al jugador
+    * coger poción
+    * coger llave y papiro
+    * pocion saliendo
+    * items saliendo
 
 ## 20210212.
 * Se añade funcionalidad para un cargador de fuentes.
@@ -53,3 +77,45 @@ Preparación del proyecto y se añade funcionalidad básica para:
 
 ## Código.
 * Algoritmo de pathfinding de [Alex Plugaru](ttps://github.com/xarg/gopathfinding)
+
+## FX/SOunds
+* echar un ojo a: 
+    * https://www.zapsplat.com/sound-effect-category/monsters-and-creatures/page/3/
+    * Asset store de unity.
+
+* sonido puerta abriendo: https://freesound.org/people/gabisaraceni/sounds/96964/
+
+* sonido puerta metal abriendo: https://freesound.org/people/nebyoolae/sounds/267692/
+
+* sonido de pasos: https://freesound.org/people/Mativve/sounds/414335/
+
+* sonido muerte jugador: https://freesound.org/people/Haramir/sounds/404014/
+
+* sonido hechizo alcanza jugador: https://freesound.org/people/EminYILDIRIM/sounds/550267/
+- https://freesound.org/people/LittleRobotSoundFactory/sounds/270409/
+
+* sonido hechizo sin efecto al alcanzar jugador: https://freesound.org/people/spookymodem/sounds/249819/
+
+* sonido cuando sale la momia: https://freesound.org/people/d761747/sounds/503096/
+- https://freesound.org/people/Speedenza/sounds/168180/
+
+* sonido momia rugiendo: https://freesound.org/people/Antimsounds/sounds/556048/
+- https://freesound.org/people/Slaking_97/sounds/332023/
+
+* sonido momia muriendo: https://freesound.org/people/Michel88/sounds/76957/
+
+* sonido pocion saliendo: https://freesound.org/people/bongmoth/sounds/156566/
+
+* sonido coger la pocion: https://freesound.org/people/Jamius/sounds/41529/
+
+* sonido item saliendo: https://freesound.org/people/Mrthenoronha/sounds/388895/
+
+* sonido coger item: https://freesound.org/people/MakoFox/sounds/126412/
+
+* sonido ambiente main menu y creditos: https://freesound.org/people/Jedo/sounds/397009/
+
+* sonido ambiente juego : https://freesound.org/people/TheFrohman/sounds/206043/
+
+* sonido de game over : https://freesound.org/people/MATRIXXX_/sounds/365782/
+
+* sonido de nivel finalizado: https://freesound.org/people/jalastram/sounds/317593/

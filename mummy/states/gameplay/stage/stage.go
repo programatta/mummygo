@@ -13,16 +13,18 @@ import (
 //Stage ...
 type Stage struct {
 	spriteSheet *utils.SpriteSheet
+	soundmgr    *utils.SoundMgr
+	gameplay    gp.IGamePlayNotificable
 	logicMap    [][]int
 	tombs       []*Tomb
-	gameplay    gp.IGamePlayNotificable
 }
 
 //NewStage is a constructor.
-func NewStage(spriteSheet *utils.SpriteSheet, gameplay gp.IGamePlayNotificable) *Stage {
+func NewStage(spriteSheet *utils.SpriteSheet, soundmgr *utils.SoundMgr, gameplay gp.IGamePlayNotificable) *Stage {
 	stage := &Stage{}
 
 	stage.spriteSheet = spriteSheet
+	stage.soundmgr = soundmgr
 	stage.gameplay = gameplay
 
 	stage.logicMap = [][]int{
@@ -85,6 +87,9 @@ func (s *Stage) Update(dt float64) {
 				s.createObjectType(tomb.contentType, tomb.x+1, tomb.y+1)
 				s.logicMap[tomb.y+1][tomb.x+1] = 3 //Tomb open
 				tomb = nil
+				openDoorPlayer := s.soundmgr.Sound("opendoor.wav")
+				openDoorPlayer.Rewind()
+				openDoorPlayer.Play()
 			} else {
 				tombsTmp[copied] = tomb
 				copied++
@@ -145,7 +150,13 @@ func (s *Stage) Draw(screen *ebiten.Image) {
 
 //OpenMainDoor ...
 func (s *Stage) OpenMainDoor() {
-	s.logicMap[0][9] = 5
+	if s.logicMap[0][9] != 5 {
+		s.logicMap[0][9] = 5
+
+		mainOpenDoorPlayer := s.soundmgr.Sound("mainopendoor.wav")
+		mainOpenDoorPlayer.Rewind()
+		mainOpenDoorPlayer.Play()
+	}
 }
 
 //GetTypeAt ...

@@ -64,7 +64,7 @@ func (g *Game) init() {
 		log.Fatal(err)
 	}
 
-	//TODO: cargador de fuentes (igual que hemos hecho con el spritesheet)
+	//Cargamos fuentes
 	fontsloader := utils.NewFontsLoader()
 	if err := fontsloader.Load("assets/fonts/ka1.ttf"); err != nil {
 		log.Fatal(err)
@@ -74,13 +74,26 @@ func (g *Game) init() {
 		log.Fatal(err)
 	}
 
+	//Cargamos los sonidos
+	soundmgr := utils.NewSoundMgr(44100)
+	if err := soundmgr.LoadSet("assets/fx", []string{
+		"ambient.wav", "game.wav",
+		"opendoor.wav", "mainopendoor.wav",
+		"mummyleave.wav", "mummygrowl.wav", "mummydeath.wav",
+		"potionleave.wav", "potiondrink.wav", "itemleave.wav", "pickupitem.wav",
+		"spell.wav", "spelldeath.wav",
+		"playerstep.wav", "playerdeath.wav",
+		"gameover.wav", "levelup.wav"}); err != nil {
+		log.Fatal(err)
+	}
+
 	//Preparamos la maquina de estados de la aplicación.
 	g.stateMgr = states.NewStateMgr()
 
 	//Añadimos los estados de juego.
 	g.stateMgr.AddState("menu", menu.NewMenu(fontsloader))
 	g.stateMgr.AddState("credits", credits.NewCredits(fontsloader))
-	g.stateMgr.AddState("gameplay", gameplay.NewGamePlay(g.spriteSheet, fontsloader))
+	g.stateMgr.AddState("gameplay", gameplay.NewGamePlay(g.spriteSheet, fontsloader, soundmgr))
 
 	//Establecemos el estado actual.
 	g.currentState = g.stateMgr.GetState("menu")
