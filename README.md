@@ -9,8 +9,13 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 # Progreso.
 ## TODO
 * FX hechizo saliendo
-* Finalizar el juego:
-    * cargando otro nivel (positvo).
+* Añadir estados en el propio juego que nos permita pasar de playing, gameover, nextlevel
+* Al finalizar el último nivel, estado de victoria y vuelta al menu principal.
+
+## 20210301.
+* Se añade datos sobre los niveles de juego
+* Se añade funcionalidad para la carga de niveles y preparar el juego para un nuevo nivel.
+* Se añade funcionalidad para el estado de game over y volver a jugar desde el inicio al pulsar jugar desde el menu ppal.
 
 ## 20210218.
 * Error en audio (necesita installar alsa)

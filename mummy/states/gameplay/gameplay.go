@@ -1,9 +1,17 @@
 package gameplay
 
 import (
+	"encoding/json"
+	"fmt"
+	"image/color"
+	"io/ioutil"
+	"log"
+
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/hajimehoshi/ebiten/text"
 	"github.com/programatta/mummygo/mummy/states/gameplay/enemies"
+	"github.com/programatta/mummygo/mummy/states/gameplay/gamelevel"
 	"github.com/programatta/mummygo/mummy/states/gameplay/object"
 	"github.com/programatta/mummygo/mummy/states/gameplay/player"
 	"github.com/programatta/mummygo/mummy/states/gameplay/stage"
@@ -15,17 +23,23 @@ import (
 type GamePlay struct {
 	nextStateID      string
 	spriteSheet      *utils.SpriteSheet
+	fontsloader      *utils.FontsLoader
 	soundmgr         *utils.SoundMgr
 	stage            *stage.Stage
 	enemies          []enemies.IEnemy
 	objects          []*object.CollectableObject
 	player           *player.Player
-	isGameOver       bool //estado
 	isNextLevel      bool //estado
 	playerLeaveLevel bool //estado
 	uigame           *UIGame
-	level            int
+	currentLevel     int
 	score            int
+	currentState     tgamePlayState
+	nextState        tgamePlayState
+	chgameover       chan bool
+	alpha            float64
+	goimgblack       *ebiten.Image
+	levels           []gamelevel.GameLevel
 }
 
 //NewGamePlay es el constructor
@@ -34,9 +48,8 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader,
 
 	g.nextStateID = "gameplay"
 	g.spriteSheet = spriteSheet
+	g.fontsloader = fontsloader
 	g.soundmgr = soundmgr
-
-	g.prepareLevel()
 
 	//Creamos el UI del juego (TODO: colocar iconos)
 	g.uigame = NewUIGame(fontsloader)
@@ -51,11 +64,7 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader,
 	g.enemies = make([]enemies.IEnemy, 0)
 
 	//Creamos al jugador.
-	w, h := ebiten.WindowSize()
 	g.player = player.NewPlayer(g.spriteSheet, g.soundmgr, g.stage)
-	g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
-	g.player.SetLives(3)
-
 	return g
 }
 
@@ -66,6 +75,8 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader,
 //Init ...
 func (g *GamePlay) Init() {
 	g.nextStateID = "gameplay"
+
+	g.prepareLevel(true)
 }
 
 //ProcessEvents procesa los eventos del juego.
@@ -78,6 +89,10 @@ func (g *GamePlay) ProcessEvents() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
 		g.stage.DebugOpenTombs()
 		g.isNextLevel = true
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key1) {
+		g.player.LostLive()
+		g.nextState = gameover
 	}
 
 	//Movimiento del player.
@@ -131,10 +146,12 @@ func (g *GamePlay) Update(dt float64) {
 					switch enemy.(type) {
 					case *enemies.Mummy:
 						g.player.LostLive()
-						g.isGameOver = g.player.Lives() == 0
-						if !g.isGameOver {
+						isGameOver := g.player.Lives() == 0
+						if !isGameOver {
 							w, h := ebiten.WindowSize()
 							g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
+						} else {
+							g.nextState = gameover
 						}
 						break
 					case *enemies.Spell:
@@ -187,38 +204,115 @@ func (g *GamePlay) Update(dt float64) {
 
 	g.uigame.SetLives(g.player.Lives())
 	g.uigame.SetPotions(g.player.Potions())
-	g.uigame.SetLevel(g.level)
+	g.uigame.SetLevel(g.currentLevel)
 	g.uigame.SetScore(g.score)
+
+	if g.currentState == gameover {
+		if g.alpha < 1 {
+			g.alpha += dt
+		} else {
+			g.alpha = 1
+			gos := g.soundmgr.Sound("gameover.wav")
+			if !gos.IsPlaying() && g.chgameover == nil {
+				g.chgameover = make(chan bool)
+				go func(ch chan bool) {
+					gos.Rewind()
+					gos.Play()
+					for gos.IsPlaying() {
+						ch <- true
+					}
+					ch <- false
+					close(ch)
+				}(g.chgameover)
+			} else {
+				isPlaying, _ := <-g.chgameover
+				if !isPlaying {
+					g.nextState = end
+					g.nextStateID = "menu"
+				}
+			}
+		}
+	}
+	if g.currentState == nextlevel {
+		if g.alpha < 1 {
+			g.alpha += dt
+		} else {
+			g.alpha = 1
+			//cargar un nuevo nivel.
+			g.prepareLevel(false)
+		}
+	}
 }
 
 //Draw dibuja los elementos del juego.
 func (g *GamePlay) Draw(screen *ebiten.Image) {
-	if g.isGameOver {
-		gos := g.soundmgr.Sound("gameover.wav")
-		if !gos.IsPlaying() {
-			gos.Rewind()
-			gos.Play()
-		}
-		return
-	}
 
 	g.stage.Draw(screen)
+	switch g.currentState {
+	case playing:
+		for _, object := range g.objects {
+			object.Draw(screen)
+		}
 
-	for _, object := range g.objects {
-		object.Draw(screen)
+		g.player.Draw(screen)
+
+		for _, enemy := range g.enemies {
+			enemy.Draw(screen)
+		}
+
+		g.uigame.Draw(screen)
+
+		break
+	case gameover:
+		op := &ebiten.DrawImageOptions{}
+		sx, sy := ebiten.WindowSize()
+		if g.goimgblack == nil {
+			g.goimgblack, _ = ebiten.NewImage(1, 1, ebiten.FilterDefault)
+			g.goimgblack.Fill(color.Black)
+		}
+		op.GeoM.Scale(float64(sx), float64(sy))
+		op.GeoM.Translate(0, 0)
+
+		if g.alpha != 1 {
+			op.ColorM.Scale(1.0, 1.0, 1.0, g.alpha)
+			screen.DrawImage(g.goimgblack, op)
+		} else {
+			screen.DrawImage(g.goimgblack, op)
+			uistring := fmt.Sprint("GAME OVER")
+			fontSize := 18
+			screenWidth, screenHeight := screen.Size()
+			x := (screenWidth - len(uistring)*fontSize) / 2
+			y := (screenHeight - fontSize) / 2
+			font := g.fontsloader.GetFont("BarcadeBrawl.ttf", 72, 18)
+			text.Draw(screen, uistring, font, x, y, color.White)
+		}
+
+		break
+	case nextlevel:
+		op := &ebiten.DrawImageOptions{}
+		sx, sy := ebiten.WindowSize()
+		if g.goimgblack == nil {
+			g.goimgblack, _ = ebiten.NewImage(1, 1, ebiten.FilterDefault)
+			g.goimgblack.Fill(color.Black)
+		}
+		op.GeoM.Scale(float64(sx), float64(sy))
+		op.GeoM.Translate(0, 0)
+
+		if g.alpha != 1 {
+			op.ColorM.Scale(1.0, 1.0, 1.0, g.alpha)
+			screen.DrawImage(g.goimgblack, op)
+		} else {
+		}
+		break
 	}
-
-	g.player.Draw(screen)
-
-	for _, enemy := range g.enemies {
-		enemy.Draw(screen)
-	}
-
-	g.uigame.Draw(screen)
 }
 
 //NextState ...
 func (g *GamePlay) NextState() string {
+	if g.currentState != g.nextState {
+		g.currentState = g.nextState
+	}
+
 	return g.nextStateID
 }
 
@@ -250,8 +344,7 @@ func (g *GamePlay) OnCreateObject(t, x, y int) {
 //OnPrepreNewLevel indica que el player ha abandonado el nivel por la puerta
 //principal y procedemos a preparar otro nivel.
 func (g *GamePlay) OnPrepreNewLevel() {
-	//TODO: de momento para ver que funciona el ciclo.
-	//g.isGameOver = true
+	g.nextState = nextlevel
 
 	ch := make(chan bool)
 	go func(ch chan bool) {
@@ -262,8 +355,6 @@ func (g *GamePlay) OnPrepreNewLevel() {
 	}(ch)
 
 	<-ch
-	//cargar un nuevo nivel.
-	g.prepareLevel()
 }
 
 //OnRequestPlayerPosition devuelve la posición del player solicitado por un
@@ -311,8 +402,70 @@ func (g *GamePlay) checkPlayerIsAttackedByEnemy(player *player.Player, enemy ene
 	return (xEnemyLog == xLog) && (yEnemyLog == yLog)
 }
 
-func (g *GamePlay) prepareLevel() {
-	//g.level++
+func (g *GamePlay) prepareLevel(isNew bool) {
+	if isNew {
+		g.currentLevel = 0
+		g.score = 0
+		g.player.SetLives(3)
+	}
+	g.currentLevel++
 
-	//TODO: cargar datos para el nivel.
+	//cargar datos para el nivel.
+	if g.levels == nil {
+		g.loadLevels("assets/data/levels")
+	}
+
+	//Posicionamos al jugador.
+	w, h := ebiten.WindowSize()
+	g.player.Reset()
+	g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
+
+	//Limpiamos objetos de juego.
+	if len(g.objects) > 0 {
+		g.objects = make([]*object.CollectableObject, 0)
+	}
+	if len(g.enemies) > 0 {
+		g.enemies = make([]enemies.IEnemy, 0)
+	}
+
+	g.stage.PrepareStageForLevel(g.levels[g.currentLevel-1])
+
+	//Estado inicial.
+	g.currentState = playing
+	g.nextState = g.currentState
+	g.alpha = 0.0
+	g.goimgblack = nil
+	g.isNextLevel = false
+	g.playerLeaveLevel = false
+}
+
+func (g *GamePlay) loadLevels(filename string) {
+	jsonfile := fmt.Sprintf("%s.json", filename)
+	data, err := ioutil.ReadFile(jsonfile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var dat levelsjson
+	if err := json.Unmarshal(data, &dat); err != nil {
+		log.Fatal(err)
+	}
+
+	g.levels = make([]gamelevel.GameLevel, 0)
+	for _, level := range dat.Levels {
+		g.levels = append(g.levels, level)
+	}
+}
+
+type tgamePlayState int
+
+const (
+	playing   tgamePlayState = tgamePlayState(0)
+	gameover  tgamePlayState = tgamePlayState(1)
+	nextlevel tgamePlayState = tgamePlayState(2)
+	end       tgamePlayState = tgamePlayState(3)
+)
+
+type levelsjson struct {
+	Levels []gamelevel.GameLevel `json:"levels"`
 }

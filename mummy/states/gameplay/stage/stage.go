@@ -3,9 +3,11 @@ package stage
 import (
 	"image"
 	"math/rand"
+	"sort"
 	"time"
 
 	"github.com/hajimehoshi/ebiten"
+	"github.com/programatta/mummygo/mummy/states/gameplay/gamelevel"
 	gp "github.com/programatta/mummygo/mummy/states/gameplay/interfaces"
 	"github.com/programatta/mummygo/utils"
 )
@@ -26,51 +28,6 @@ func NewStage(spriteSheet *utils.SpriteSheet, soundmgr *utils.SoundMgr, gameplay
 	stage.spriteSheet = spriteSheet
 	stage.soundmgr = soundmgr
 	stage.gameplay = gameplay
-
-	stage.logicMap = [][]int{
-		{1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
-		{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
-		{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
-		{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
-		{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	}
-
-	//Create tombs.
-	stage.tombs = make([]*Tomb, 0)
-
-	seed := rand.NewSource(time.Now().UnixNano())
-	rnd := rand.New(seed)
-
-	sg1 := rnd.Intn(8)     //[0,8) => 0,1,2,3,4,5,6,7
-	sg2 := rnd.Intn(8) + 8 //[8,16)=>8,9,10,11,12,13,14,15
-
-	for i := 0; i < 16; i++ {
-		//Esquina superior izquierda de cada tumba.
-		x1 := 2 + 4*(i/4)
-		y1 := 2 + 3*(i%4)
-
-		var contentType int
-		if i == sg1 {
-			contentType = 3 //Key
-		} else if i == sg2 {
-			contentType = 4 //Papyre
-		} else {
-			contentType = stage.generateContentType(rnd)
-		}
-		tomb := NewTomb(x1, y1, contentType)
-		stage.tombs = append(stage.tombs, tomb)
-	}
 
 	return stage
 }
@@ -148,6 +105,95 @@ func (s *Stage) Draw(screen *ebiten.Image) {
 	}
 }
 
+//PrepareStageForLevel ...
+func (s *Stage) PrepareStageForLevel(level gamelevel.GameLevel) {
+
+	contentType := make(map[int]int)
+	tombIds := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
+	s.logicMap = [][]int{
+		{1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
+		{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
+		{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
+		{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
+		{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	}
+
+	s.tombs = make([]*Tomb, 0)
+
+	seed := rand.NewSource(time.Now().Local().Unix())
+	rnd := rand.New(seed)
+
+	//Posicionamos llave y papiro.
+	keyPos := rnd.Intn(8)        //[0,8) => 0,1,2,3,4,5,6,7
+	papyrePos := rnd.Intn(8) + 8 //[8,16)=>8,9,10,11,12,13,14,15
+
+	//Borramos de abajo hacia arriba para no descolocar posiciones.
+	//.: primero el papiro.
+	s.removePosition(&tombIds, papyrePos)
+	contentType[papyrePos] = 4
+
+	//.: luego la llave.
+	s.removePosition(&tombIds, keyPos)
+	contentType[keyPos] = 3
+
+	//Resto de elementos de nivel.
+	for level.Mummies > 0 {
+		pos := rnd.Intn(len(tombIds))
+		valpos := tombIds[pos]
+		s.removePosition(&tombIds, pos)
+		contentType[valpos] = 1
+		level.Mummies--
+	}
+
+	for level.Potins > 0 {
+		pos := rnd.Intn(len(tombIds))
+		valpos := tombIds[pos]
+		s.removePosition(&tombIds, pos)
+		contentType[valpos] = 2
+		level.Potins--
+	}
+
+	for level.Spells > 0 {
+		pos := rnd.Intn(len(tombIds))
+		valpos := tombIds[pos]
+		s.removePosition(&tombIds, pos)
+		contentType[valpos] = 5
+		level.Spells--
+	}
+
+	for _, valpos := range tombIds {
+		contentType[valpos] = 0
+	}
+
+	//Ordenamos las posiciones.
+	keys := make([]int, 0, len(contentType))
+	for k := range contentType {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+
+	for i, k := range keys {
+		//Esquina superior izquierda de cada tumba.
+		x1 := 2 + 4*(i/4)
+		y1 := 2 + 3*(i%4)
+
+		tomb := NewTomb(x1, y1, contentType[k])
+		s.tombs = append(s.tombs, tomb)
+	}
+}
+
 //OpenMainDoor ...
 func (s *Stage) OpenMainDoor() {
 	if s.logicMap[0][9] != 5 {
@@ -185,29 +231,15 @@ func (s *Stage) DebugOpenTombs() {
 	s.logicMap[0][9] = 5 //Puerta principal abierta.
 }
 
-func (s *Stage) generateContentType(rnd *rand.Rand) int {
-	selector := rnd.Intn(10) + 1 //[0,10)+1 => 1,2,3,4,5,6,7,8,9,10
-
-	contentType := 0
-	switch selector {
-	case 2, 5, 7:
-		contentType = 1 //Mummy
-		break
-	case 4, 9:
-		contentType = 2 //Potion
-		break
-	case 8:
-		contentType = 5 //Hechizo
-	default: //1,3,6,10 //Vacio
-		break
-	}
-
-	return contentType
-}
-
 func (s *Stage) createObjectType(t, x, y int) {
 	xfis := x * 32
 	yfis := y * 32
 
 	s.gameplay.OnCreateObject(t, xfis, yfis)
+}
+
+func (s *Stage) removePosition(array *[]int, pos int) {
+	copy((*array)[pos:], (*array)[pos+1:])
+	(*array)[len((*array))-1] = -1
+	*array = ((*array)[:len((*array))-1])
 }

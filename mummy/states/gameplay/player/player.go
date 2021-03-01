@@ -323,6 +323,29 @@ func (p *Player) LeaveLevel(gameplay interfaces.IGamePlayNotificable) {
 	p.currentDir = "up"
 }
 
+//Reset llamado cuando empezaos un nuevo nivel.
+func (p *Player) Reset() {
+	p.state = playerNormal
+	p.currentDir = "down"
+	p.dirX = 0
+	p.dirY = 0
+	p.toX = 0
+	p.toY = 0
+
+	p.potions = 0
+	p.hasKey = false
+	p.hasPapyre = false
+
+	p.isLeavingLevel = false
+	p.isBewitched = false
+	p.bewitchedTime = 0
+	p.isBlinking = false
+	p.blinkingTime = 0
+
+	p.sc = 1
+	p.alpha = 1
+}
+
 //HasKeyAndPapyre devuelve true si el player ha cogido la llave y el papiro.
 func (p *Player) HasKeyAndPapyre() bool {
 	return p.hasKey && p.hasPapyre
@@ -459,10 +482,11 @@ func (p *Player) updateMap(x, y float64, dir string) {
 type tplayerState int
 
 const (
-	playerHiding           tplayerState = tplayerState(0)
-	playerLeaving          tplayerState = tplayerState(1)
-	playerLeftLevel        tplayerState = tplayerState(2)
-	playerBlinkLess        tplayerState = tplayerState(3)
-	playerBlinkMore        tplayerState = tplayerState(4)
-	playerReadyToPlayLevel tplayerState = tplayerState(5)
+	playerNormal           tplayerState = tplayerState(0)
+	playerHiding           tplayerState = tplayerState(1)
+	playerLeaving          tplayerState = tplayerState(2)
+	playerLeftLevel        tplayerState = tplayerState(3)
+	playerBlinkLess        tplayerState = tplayerState(4)
+	playerBlinkMore        tplayerState = tplayerState(5)
+	playerReadyToPlayLevel tplayerState = tplayerState(6)
 )
