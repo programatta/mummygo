@@ -390,9 +390,13 @@ func (g *GamePlay) NextState() string {
 
 //End ...
 func (g *GamePlay) End() {
+	//Paramos la musica ambiente.
 	ambiencePlayer := g.soundmgr.Sound("game.wav")
 	ambiencePlayer.Pause()
 	ambiencePlayer.Rewind()
+
+	//Eliminamos los enemigos para parar los sonidos.
+	g.enemies = make([]enemies.IEnemy, 0)
 }
 
 /*===========================================================================*/
@@ -461,7 +465,7 @@ func (g *GamePlay) checkCanPickUpObject(player *player.Player, itemObject *objec
 }
 
 func (g *GamePlay) checkPlayerIsAttackedByEnemy(player *player.Player, enemy enemies.IEnemy) bool {
-	if player.IsBlinking() {
+	if player.IsUnattackable() {
 		return false
 	}
 

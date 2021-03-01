@@ -36,6 +36,7 @@ type Player struct {
 	isBlinking       bool
 	isBewitched      bool
 	bewitchedTime    float64
+	isUnattackable   bool
 }
 
 //PlayerLeft ...
@@ -167,6 +168,7 @@ func (p *Player) Update(dt float64) {
 			p.alpha = 1
 			p.isBlinking = false
 			p.blinkingTime = 0
+			p.isUnattackable = false
 		}
 
 		//TODO: Modo hechizado (al ser alcanzado por el hechizo).
@@ -341,6 +343,7 @@ func (p *Player) Reset() {
 	p.bewitchedTime = 0
 	p.isBlinking = false
 	p.blinkingTime = 0
+	p.isUnattackable = false
 
 	p.sc = 1
 	p.alpha = 1
@@ -384,6 +387,7 @@ func (p *Player) LostLive() {
 	p.toY = 0
 
 	//blinking
+	p.isUnattackable = true
 	p.isBlinking = true
 	p.state = playerBlinkLess
 	p.blinkingTime = 5 //segundos.
@@ -414,10 +418,10 @@ func (p *Player) CurrentDir() string {
 	return p.currentDir
 }
 
-//IsBlinking devuelve true si el player está saliendo de una muerte anterior.
+//IsUnattackable devuelve true si el player está saliendo de una muerte anterior.
 //En este estado no afectan colisiones con las momias.
-func (p *Player) IsBlinking() bool {
-	return p.isBlinking
+func (p *Player) IsUnattackable() bool {
+	return p.isUnattackable //p.isBlinking
 }
 
 //Bewitched deja parado al jugador durante unos segundos.

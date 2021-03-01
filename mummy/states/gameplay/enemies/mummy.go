@@ -197,9 +197,12 @@ func (m *Mummy) doIA() {
 		}
 
 	} else if m.state == enemyNextStep {
-		if len(m.nodesPath) == 0 {
+		if len(m.nodesPath) == 1 {
 			m.state = enemyLookingfor
+			return
 		}
+		m.state = enemyWalking
+
 		currentNode := m.nodesPath[0]
 		toNode := m.nodesPath[1]
 
@@ -233,12 +236,6 @@ func (m *Mummy) doIA() {
 				m.dirY = 32
 				m.toY = m.posY + float64(m.dirY)
 			}
-		}
-
-		if len(m.nodesPath) == 1 {
-			m.state = enemyLookingfor
-		} else {
-			m.state = enemyWalking
 		}
 	}
 }
