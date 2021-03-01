@@ -55,3 +55,8 @@ func (c *Credits) Draw(screen *ebiten.Image) {
 func (c *Credits) NextState() string {
 	return c.nextStateID
 }
+
+//End ...
+func (c *Credits) End() {
+
+}

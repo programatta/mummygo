@@ -239,7 +239,47 @@ func (g *GamePlay) Update(dt float64) {
 		} else {
 			g.alpha = 1
 			//cargar un nuevo nivel.
+			ch := make(chan bool)
+			go func(ch chan bool) {
+				levelup := g.soundmgr.Sound("levelup.wav")
+				levelup.Rewind()
+				levelup.Play()
+				ch <- true
+			}(ch)
+
+			<-ch
+			close(ch)
 			g.prepareLevel(false)
+		}
+	}
+	if g.currentState == victorylevel {
+		if g.alpha < 1 {
+			g.alpha += dt
+		} else {
+			g.alpha = 1
+			wgs := g.soundmgr.Sound("wingame.wav")
+			if !wgs.IsPlaying() && g.chgameover == nil {
+
+				//Eliminamos todos los enemigos.
+				g.enemies = make([]enemies.IEnemy, 0)
+
+				g.chgameover = make(chan bool)
+				go func(ch chan bool) {
+					wgs.Rewind()
+					wgs.Play()
+					for wgs.IsPlaying() {
+						ch <- true
+					}
+					ch <- false
+					close(ch)
+				}(g.chgameover)
+			} else {
+				isPlaying, _ := <-g.chgameover
+				if !isPlaying {
+					g.nextState = end
+					g.nextStateID = "menu"
+				}
+			}
 		}
 	}
 }
@@ -301,7 +341,39 @@ func (g *GamePlay) Draw(screen *ebiten.Image) {
 		if g.alpha != 1 {
 			op.ColorM.Scale(1.0, 1.0, 1.0, g.alpha)
 			screen.DrawImage(g.goimgblack, op)
+		}
+
+		break
+	case victorylevel:
+		op := &ebiten.DrawImageOptions{}
+		sx, sy := ebiten.WindowSize()
+		if g.goimgblack == nil {
+			g.goimgblack, _ = ebiten.NewImage(1, 1, ebiten.FilterDefault)
+			g.goimgblack.Fill(color.Black)
+		}
+		op.GeoM.Scale(float64(sx), float64(sy))
+		op.GeoM.Translate(0, 0)
+
+		if g.alpha != 1 {
+			op.ColorM.Scale(1.0, 1.0, 1.0, g.alpha)
+			screen.DrawImage(g.goimgblack, op)
 		} else {
+			screen.DrawImage(g.goimgblack, op)
+			uistring := fmt.Sprint("YOU WIN")
+			uiscore := fmt.Sprintf("YOUR SCORE:%d", g.score)
+			fontSize := 18
+			screenWidth, screenHeight := screen.Size()
+
+			//texto: you win!
+			x := (screenWidth - len(uistring)*fontSize) / 2
+			y := (screenHeight - fontSize) / 2
+			font := g.fontsloader.GetFont("BarcadeBrawl.ttf", 72, 18)
+			text.Draw(screen, uistring, font, x, y, color.White)
+
+			//texto: your score xxxx.
+			x2 := (screenWidth - len(uiscore)*fontSize) / 2
+			y2 := (screenHeight + fontSize*2) / 2
+			text.Draw(screen, uiscore, font, x2, y2, color.White)
 		}
 		break
 	}
@@ -314,6 +386,13 @@ func (g *GamePlay) NextState() string {
 	}
 
 	return g.nextStateID
+}
+
+//End ...
+func (g *GamePlay) End() {
+	ambiencePlayer := g.soundmgr.Sound("game.wav")
+	ambiencePlayer.Pause()
+	ambiencePlayer.Rewind()
 }
 
 /*===========================================================================*/
@@ -342,19 +421,14 @@ func (g *GamePlay) OnCreateObject(t, x, y int) {
 }
 
 //OnPrepreNewLevel indica que el player ha abandonado el nivel por la puerta
-//principal y procedemos a preparar otro nivel.
+//principal y procedemos a preparar otro nivel o finalizar el juego ya que ha
+//alcanzado el máximo nivel.
 func (g *GamePlay) OnPrepreNewLevel() {
-	g.nextState = nextlevel
-
-	ch := make(chan bool)
-	go func(ch chan bool) {
-		levelup := g.soundmgr.Sound("levelup.wav")
-		levelup.Rewind()
-		levelup.Play()
-		ch <- true
-	}(ch)
-
-	<-ch
+	if g.currentLevel == len(g.levels) {
+		g.nextState = victorylevel
+	} else {
+		g.nextState = nextlevel
+	}
 }
 
 //OnRequestPlayerPosition devuelve la posición del player solicitado por un
@@ -460,10 +534,11 @@ func (g *GamePlay) loadLevels(filename string) {
 type tgamePlayState int
 
 const (
-	playing   tgamePlayState = tgamePlayState(0)
-	gameover  tgamePlayState = tgamePlayState(1)
-	nextlevel tgamePlayState = tgamePlayState(2)
-	end       tgamePlayState = tgamePlayState(3)
+	playing      tgamePlayState = tgamePlayState(0)
+	gameover     tgamePlayState = tgamePlayState(1)
+	nextlevel    tgamePlayState = tgamePlayState(2)
+	victorylevel tgamePlayState = tgamePlayState(3)
+	end          tgamePlayState = tgamePlayState(4)
 )
 
 type levelsjson struct {

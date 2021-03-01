@@ -8,14 +8,16 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 
 # Progreso.
 ## TODO
+* Al estar hechizado las momias se paran detrás del judagos.
 * FX hechizo saliendo
 * Añadir estados en el propio juego que nos permita pasar de playing, gameover, nextlevel
-* Al finalizar el último nivel, estado de victoria y vuelta al menu principal.
 
 ## 20210301.
 * Se añade datos sobre los niveles de juego
 * Se añade funcionalidad para la carga de niveles y preparar el juego para un nuevo nivel.
 * Se añade funcionalidad para el estado de game over y volver a jugar desde el inicio al pulsar jugar desde el menu ppal.
+* Se añade funcionalidad para detectar el último nivel y pasar a un estado de victoria y vuelta al menu principal.
+* Se añade sonido de estado de victoria.
 
 ## 20210218.
 * Error en audio (necesita installar alsa)
@@ -124,3 +126,6 @@ Preparación del proyecto y se añade funcionalidad básica para:
 * sonido de game over : https://freesound.org/people/MATRIXXX_/sounds/365782/
 
 * sonido de nivel finalizado: https://freesound.org/people/jalastram/sounds/317593/
+
+* sonido de juego acabado: https://freesound.org/people/LittleRobotSoundFactory/sounds/270402/
+  Está a 48000Hz -> 44100Hz (https://audio.online-convert.com/convert-to-wav)

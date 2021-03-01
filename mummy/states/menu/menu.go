@@ -65,3 +65,8 @@ func (m *Menu) Draw(screen *ebiten.Image) {
 func (m *Menu) NextState() string {
 	return m.nextStateID
 }
+
+//End ...
+func (m *Menu) End() {
+
+}

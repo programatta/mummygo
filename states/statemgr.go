@@ -30,6 +30,7 @@ func (sm *StateMgr) ChangeState(currentState IState) IState {
 	stateID := currentState.NextState()
 	state := *sm.states[stateID]
 	if sm.currentStateID != stateID {
+		(*sm.states[sm.currentStateID]).End()
 		sm.currentStateID = stateID
 		state = *sm.states[stateID]
 		state.Init()

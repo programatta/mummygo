@@ -9,4 +9,5 @@ type IState interface {
 	Update(dt float64)
 	Draw(screen *ebiten.Image)
 	NextState() string
+	End()
 }
