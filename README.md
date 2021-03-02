@@ -8,8 +8,13 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 
 # Progreso.
 ## TODO
-* FX hechizo saliendo
+* Check points para que las momias sean un poco mas listas (haciendo uso de pathfinding).
 * Añadir estados en el propio juego que nos permita pasar de playing, gameover, nextlevel
+* Añadir una barra de tiempo (similar a la que tenia Manic-Miner)
+
+## 20210302.
+* Se añade sonido hechizo saliendo.
+* Se añade funcionalidad en la pantalla de creditos para que el texto se desplace en scroll vertical.
 
 ## 20210301.
 * Se añade datos sobre los niveles de juego
@@ -18,6 +23,7 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 * Se añade funcionalidad para detectar el último nivel y pasar a un estado de victoria y vuelta al menu principal.
 * Se añade sonido de estado de victoria.
 * Bug fixed: Al estar hechizado las momias se paran detrás del judagor.
+
 ## 20210218.
 * Error en audio (necesita installar alsa)
 ~~~
@@ -120,7 +126,8 @@ Preparación del proyecto y se añade funcionalidad básica para:
 
 * sonido ambiente main menu y creditos: https://freesound.org/people/Jedo/sounds/397009/
 
-* sonido ambiente juego : https://freesound.org/people/TheFrohman/sounds/206043/
+* sonido ambiente juego : https://freesound.org/people/OllieOllie/sounds/262351/
+- https://freesound.org/people/TheFrohman/sounds/206043/
 
 * sonido de game over : https://freesound.org/people/MATRIXXX_/sounds/365782/
 
@@ -128,3 +135,6 @@ Preparación del proyecto y se añade funcionalidad básica para:
 
 * sonido de juego acabado: https://freesound.org/people/LittleRobotSoundFactory/sounds/270402/
   Está a 48000Hz -> 44100Hz (https://audio.online-convert.com/convert-to-wav)
+
+## GRAFICOS:
+ * MUROS, PUERTAS : http://medium-sahzenem.com/5cue1n/2d-tileset.html

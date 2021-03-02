@@ -81,7 +81,7 @@ func (g *Game) init() {
 		"opendoor.wav", "mainopendoor.wav",
 		"mummyleave.wav", "mummygrowl.wav", "mummydeath.wav",
 		"potionleave.wav", "potiondrink.wav", "itemleave.wav", "pickupitem.wav",
-		"spell.wav", "spelldeath.wav",
+		"spellleave.wav", "spell.wav", "spelldeath.wav",
 		"playerstep.wav", "playerdeath.wav",
 		"gameover.wav", "levelup.wav", "wingame.wav"}); err != nil {
 		log.Fatal(err)

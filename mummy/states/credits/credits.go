@@ -31,6 +31,7 @@ func NewCredits(fontsloader *utils.FontsLoader) states.IState {
 //Init ...
 func (c *Credits) Init() {
 	c.nextStateID = "credits"
+	c.uicredits.Reset()
 }
 
 //ProcessEvents procesa los eventos del juego.
@@ -42,7 +43,7 @@ func (c *Credits) ProcessEvents() {
 
 //Update actualiza la lógica de los creditos.
 func (c *Credits) Update(dt float64) {
-
+	c.uicredits.Update(dt)
 }
 
 //Draw draws the game.

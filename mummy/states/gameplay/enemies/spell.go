@@ -137,6 +137,13 @@ func (s *Spell) doPresentation(dt float64) {
 	} else if s.state == enemyLeaving {
 		if s.posY < s.toY {
 			s.posY = s.posY + 32*dt
+
+			spellleave := s.soundmgr.Sound("spellleave.wav")
+			if !spellleave.IsPlaying() {
+				spellleave.Rewind()
+				spellleave.Play()
+			}
+
 		} else if s.posY >= s.toY {
 			s.posY = s.toY
 			s.toY = 0
