@@ -14,6 +14,7 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 
 ## 20210302.
 * Se añade sonido hechizo saliendo.
+* Se añade funcionalidad para el sonido del hechizo saliendo.
 * Se añade funcionalidad en la pantalla de creditos para que el texto se desplace en scroll vertical.
 
 ## 20210301.
