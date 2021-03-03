@@ -180,14 +180,39 @@ func (ui *UICredits) drawScroll(screen *ebiten.Image, alfa float64) {
 	ui.scrollViewHight = sy - headerHeight - footerHeight
 	if ui.scrollNormal {
 		screen.DrawImage(ui.imgScroll.SubImage(image.Rect(0, 0+int(ui.descPosY), sx, ui.scrollViewHight+int(ui.descPosY))).(*ebiten.Image), op)
+
+		if ui.scrollViewHight+int(ui.descPosY) > maxScrollSize {
+			//completamos con una imagen temporal el hueco dejado por la imagen
+			//de scroll.
+			p := ui.imgScroll.SubImage(image.Rect(0, 0+int(ui.descPosY), sx, ui.scrollViewHight+int(ui.descPosY))).Bounds().Size()
+
+			op2 := &ebiten.DrawImageOptions{}
+			offset := ui.scrollViewHight - p.Y
+			imgtmp, _ := ebiten.NewImage(p.X, offset, ebiten.FilterDefault)
+			imgtmp.Fill(color.NRGBA{0xCE, 0x9C, 0x72, uint8(halfa)})
+			op2.GeoM.Translate(0, float64(p.Y)+float64(headerHeight))
+			screen.DrawImage(imgtmp, op2)
+		}
 	} else {
-		op.GeoM.Translate(0, float64(ui.scrollViewHight)-ui.descPosY)
-		screen.DrawImage(ui.imgScroll.SubImage(image.Rect(0, 0, sx, 0+int(ui.descPosY))).(*ebiten.Image), op)
+		//completamos con una imagen temporal ya que hemos bajado la imagen de
+		//scroll a la parte alta del footer.
+		op2 := &ebiten.DrawImageOptions{}
+		sx2, _ := ebiten.WindowSize()
+		offset := ui.scrollViewHight - int(ui.descPosY)
+		imgtmp, _ := ebiten.NewImage(sx2, offset, ebiten.FilterDefault)
+		imgtmp.Fill(color.NRGBA{0xCE, 0x9C, 0x72, uint8(halfa)})
+		op2.GeoM.Translate(0, float64(headerHeight))
+		screen.DrawImage(imgtmp, op2)
+
+		//movemos la imagen de scroll a la parte alta del footer para ir su-
+		//biendo y mostrando texto.
+		op.GeoM.Translate(0, float64(offset))
+		screen.DrawImage(ui.imgScroll.SubImage(image.Rect(0, 0, sx, int(ui.descPosY))).(*ebiten.Image), op)
 	}
 
 }
 
 const (
-	maxScrollSize    int     = 908
+	maxScrollSize    int     = 908 //908 sin texto debajo de graphics.
 	maxWaitTimeInSec float64 = 3
 )

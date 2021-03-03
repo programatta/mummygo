@@ -15,6 +15,7 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 ## 20210303.
 * Se añade funcionalidad para mejorar las transiciones de pantallas a un fundido en negro (fadein/fadeout)
 * Se añade icono de al aplicación.
+* Bug fixed: en creditos durante la transición mientras el scroll reaparecia.
 
 ## 20210302.
 * Se añade sonido hechizo saliendo.
