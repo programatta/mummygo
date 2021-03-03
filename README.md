@@ -12,6 +12,9 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 * Añadir estados en el propio juego que nos permita pasar de playing, gameover, nextlevel
 * Añadir una barra de tiempo (similar a la que tenia Manic-Miner)
 
+## 20210303.
+* Se añade funcionalidad para mejorar las transiciones de pantallas a un fundido en negro (fadein/fadeout)
+
 ## 20210302.
 * Se añade sonido hechizo saliendo.
 * Se añade funcionalidad para el sonido del hechizo saliendo.
@@ -85,11 +88,11 @@ Preparación del proyecto y se añade funcionalidad básica para:
 
 # Recursos.
 ## Fonts.
-* [Barcade-brawl]https://www.fontspace.com/barcade-brawl-font-f31534) de [Pixel Kitchen](https://www.fontspace.com/pixel-kitchen)
+* [Barcade-brawl](https://www.fontspace.com/barcade-brawl-font-f31534) de [Pixel Kitchen](https://www.fontspace.com/pixel-kitchen)
 * [Karmatic-arcade](https://www.1001freefonts.com/karmatic-arcade.font) de [Vic Fieger](https://www.1001freefonts.com/designer-vic-fieger-fontlisting.php)
 
 ## Código.
-* Algoritmo de pathfinding de [Alex Plugaru](ttps://github.com/xarg/gopathfinding)
+* Algoritmo de pathfinding de [Alex Plugaru](https://github.com/xarg/gopathfinding)
 
 ## FX/SOunds
 * echar un ojo a: 

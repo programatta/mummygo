@@ -75,6 +75,7 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader,
 //Init ...
 func (g *GamePlay) Init() {
 	g.nextStateID = "gameplay"
+	g.chgameover = nil
 
 	g.prepareLevel(true)
 }
@@ -83,6 +84,7 @@ func (g *GamePlay) Init() {
 func (g *GamePlay) ProcessEvents() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		g.nextStateID = "menu"
+		g.nextState = exit
 	}
 
 	//Para debug.
@@ -227,7 +229,7 @@ func (g *GamePlay) Update(dt float64) {
 			} else {
 				isPlaying, _ := <-g.chgameover
 				if !isPlaying {
-					g.nextState = end
+					g.nextState = exit
 					g.nextStateID = "menu"
 				}
 			}
@@ -276,17 +278,24 @@ func (g *GamePlay) Update(dt float64) {
 			} else {
 				isPlaying, _ := <-g.chgameover
 				if !isPlaying {
-					g.nextState = end
+					g.nextState = exit
 					g.nextStateID = "menu"
 				}
 			}
+		}
+	}
+	if g.currentState == exit {
+		if g.alpha < 1 {
+			g.alpha += dt
+		} else {
+			g.alpha = 1
+			g.nextState = end
 		}
 	}
 }
 
 //Draw dibuja los elementos del juego.
 func (g *GamePlay) Draw(screen *ebiten.Image) {
-
 	g.stage.Draw(screen)
 	switch g.currentState {
 	case playing:
@@ -301,23 +310,11 @@ func (g *GamePlay) Draw(screen *ebiten.Image) {
 		}
 
 		g.uigame.Draw(screen)
-
 		break
-	case gameover:
-		op := &ebiten.DrawImageOptions{}
-		sx, sy := ebiten.WindowSize()
-		if g.goimgblack == nil {
-			g.goimgblack, _ = ebiten.NewImage(1, 1, ebiten.FilterDefault)
-			g.goimgblack.Fill(color.Black)
-		}
-		op.GeoM.Scale(float64(sx), float64(sy))
-		op.GeoM.Translate(0, 0)
 
-		if g.alpha != 1 {
-			op.ColorM.Scale(1.0, 1.0, 1.0, g.alpha)
-			screen.DrawImage(g.goimgblack, op)
-		} else {
-			screen.DrawImage(g.goimgblack, op)
+	case gameover:
+		g.fadeToBlack(screen)
+		if g.alpha == 1 {
 			uistring := fmt.Sprint("GAME OVER")
 			fontSize := 18
 			screenWidth, screenHeight := screen.Size()
@@ -326,39 +323,19 @@ func (g *GamePlay) Draw(screen *ebiten.Image) {
 			font := g.fontsloader.GetFont("BarcadeBrawl.ttf", 72, 18)
 			text.Draw(screen, uistring, font, x, y, color.White)
 		}
-
 		break
+
 	case nextlevel:
-		op := &ebiten.DrawImageOptions{}
-		sx, sy := ebiten.WindowSize()
-		if g.goimgblack == nil {
-			g.goimgblack, _ = ebiten.NewImage(1, 1, ebiten.FilterDefault)
-			g.goimgblack.Fill(color.Black)
-		}
-		op.GeoM.Scale(float64(sx), float64(sy))
-		op.GeoM.Translate(0, 0)
-
-		if g.alpha != 1 {
-			op.ColorM.Scale(1.0, 1.0, 1.0, g.alpha)
-			screen.DrawImage(g.goimgblack, op)
-		}
-
+		fallthrough
+	case exit:
+		fallthrough
+	case end:
+		g.fadeToBlack(screen)
 		break
-	case victorylevel:
-		op := &ebiten.DrawImageOptions{}
-		sx, sy := ebiten.WindowSize()
-		if g.goimgblack == nil {
-			g.goimgblack, _ = ebiten.NewImage(1, 1, ebiten.FilterDefault)
-			g.goimgblack.Fill(color.Black)
-		}
-		op.GeoM.Scale(float64(sx), float64(sy))
-		op.GeoM.Translate(0, 0)
 
-		if g.alpha != 1 {
-			op.ColorM.Scale(1.0, 1.0, 1.0, g.alpha)
-			screen.DrawImage(g.goimgblack, op)
-		} else {
-			screen.DrawImage(g.goimgblack, op)
+	case victorylevel:
+		g.fadeToBlack(screen)
+		if g.alpha == 1 {
 			uistring := fmt.Sprint("YOU WIN")
 			uiscore := fmt.Sprintf("YOUR SCORE:%d", g.score)
 			fontSize := 18
@@ -375,6 +352,7 @@ func (g *GamePlay) Draw(screen *ebiten.Image) {
 			y2 := (screenHeight + fontSize*2) / 2
 			text.Draw(screen, uiscore, font, x2, y2, color.White)
 		}
+
 		break
 	}
 }
@@ -385,7 +363,10 @@ func (g *GamePlay) NextState() string {
 		g.currentState = g.nextState
 	}
 
-	return g.nextStateID
+	if g.currentState == end {
+		return g.nextStateID
+	}
+	return "gameplay"
 }
 
 //End ...
@@ -535,6 +516,21 @@ func (g *GamePlay) loadLevels(filename string) {
 	}
 }
 
+func (g *GamePlay) fadeToBlack(screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+	sx, sy := ebiten.WindowSize()
+	if g.goimgblack == nil {
+		g.goimgblack, _ = ebiten.NewImage(1, 1, ebiten.FilterDefault)
+		g.goimgblack.Fill(color.Black)
+	}
+	op.GeoM.Scale(float64(sx), float64(sy))
+	op.GeoM.Translate(0, 0)
+
+	//if g.alpha != 1 {
+	op.ColorM.Scale(1.0, 1.0, 1.0, g.alpha)
+	screen.DrawImage(g.goimgblack, op)
+}
+
 type tgamePlayState int
 
 const (
@@ -542,7 +538,8 @@ const (
 	gameover     tgamePlayState = tgamePlayState(1)
 	nextlevel    tgamePlayState = tgamePlayState(2)
 	victorylevel tgamePlayState = tgamePlayState(3)
-	end          tgamePlayState = tgamePlayState(4)
+	exit         tgamePlayState = tgamePlayState(4)
+	end          tgamePlayState = tgamePlayState(5)
 )
 
 type levelsjson struct {

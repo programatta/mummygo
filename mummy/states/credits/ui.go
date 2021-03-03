@@ -2,6 +2,7 @@ package credits
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"math"
 
@@ -20,6 +21,8 @@ type UICredits struct {
 	imgHeader       *ebiten.Image
 	imgFooter       *ebiten.Image
 	waitTime        float64
+	scrollNormal    bool
+	scrollViewHight int
 }
 
 //NewUICredits es el constructor.
@@ -27,51 +30,58 @@ func NewUICredits(fontloader *utils.FontsLoader) *UICredits {
 	ui := UICredits{}
 	ui.arcadeFontTitle = fontloader.GetFont("BarcadeBrawl.ttf", 72, 30)
 	ui.arcadeFontDesc = fontloader.GetFont("BarcadeBrawl.ttf", 72, 16)
-	ui.descPosY = 80 //tamaño de la cabecera.
-	ui.waitTime = 5  //segundos.
+	ui.descPosY = 0
+	ui.waitTime = maxWaitTimeInSec
+	ui.scrollNormal = true
 	return &ui
 }
 
 //Update ...
 func (ui *UICredits) Update(dt float64) {
-	_, screenHeight := ebiten.WindowSize()
 	if ui.waitTime > 0 {
 		ui.waitTime -= dt
 	} else {
-		ui.descPosY -= dt * 30
-		if math.Abs(ui.descPosY) >= float64(maxScrollView-80) {
-			ui.descPosY = float64(screenHeight) - 54
+		ui.descPosY += dt * 30
+		if ui.scrollNormal {
+			if math.Abs(ui.descPosY) >= float64(maxScrollSize) {
+				ui.descPosY = 0
+				ui.scrollNormal = false
+			}
+		} else {
+			if float64(ui.scrollViewHight)-ui.descPosY <= 0 {
+				ui.descPosY = 0
+				ui.scrollNormal = true
+			}
 		}
 	}
 }
 
 //Draw ...
-func (ui *UICredits) Draw(screen *ebiten.Image) {
-	//Dibujamos primero el scroll
-	ui.drawScroll(screen)
-
-	//Dubujamos las partes estaticas.
-	ui.drawHeader(screen)
-	ui.drawFooter(screen)
+func (ui *UICredits) Draw(screen *ebiten.Image, alfa float64) {
+	ui.drawHeader(screen, alfa)
+	ui.drawFooter(screen, alfa)
+	ui.drawScroll(screen, alfa)
 }
 
 //Reset ...
 func (ui *UICredits) Reset() {
-	ui.descPosY = 80 //tamaño de la cabecera.
-	ui.waitTime = 5  //segundos
+	ui.descPosY = 0
+	ui.waitTime = maxWaitTimeInSec
+	ui.scrollNormal = true
 }
 
 /*===========================================================================*/
 /*                               Private Section                             */
 /*===========================================================================*/
-func (ui *UICredits) drawHeader(screen *ebiten.Image) {
+func (ui *UICredits) drawHeader(screen *ebiten.Image, alfa float64) {
+	halfa := 0xff * alfa
 	screenWidth, _ := screen.Size()
 
 	//Titulo.
 	fztitle := 30
 	uititle := fmt.Sprintf("-Credits-")
 
-	xt := (screenWidth - len(uititle)*fztitle) / 2 // + 20
+	xt := (screenWidth - len(uititle)*fztitle) / 2
 	yt := 2 * fztitle
 
 	//Creamos la imagen de la cabecera.
@@ -79,15 +89,16 @@ func (ui *UICredits) drawHeader(screen *ebiten.Image) {
 	sx, _ := ebiten.WindowSize()
 	if ui.imgHeader == nil {
 		ui.imgHeader, _ = ebiten.NewImage(sx, yt+20, ebiten.FilterDefault)
-		ui.imgHeader.Fill(color.NRGBA{0xCE, 0x9C, 0x72, 0xff})
 	}
+	ui.imgHeader.Fill(color.NRGBA{0xCE, 0x9C, 0x72, uint8(halfa)})
 	op.GeoM.Translate(0, 0)
 
-	text.Draw(ui.imgHeader, uititle, ui.arcadeFontTitle, xt, yt, color.White)
+	text.Draw(ui.imgHeader, uititle, ui.arcadeFontTitle, xt, yt, color.NRGBA{0xff, 0xff, 0xff, uint8(halfa)})
 	screen.DrawImage(ui.imgHeader, op)
 }
 
-func (ui *UICredits) drawFooter(screen *ebiten.Image) {
+func (ui *UICredits) drawFooter(screen *ebiten.Image, alfa float64) {
+	halfa := 0xff * alfa
 	screenWidth, _ := screen.Size()
 	fzdescription := 16
 
@@ -100,23 +111,30 @@ func (ui *UICredits) drawFooter(screen *ebiten.Image) {
 	sx, sy := ebiten.WindowSize()
 	if ui.imgFooter == nil {
 		ui.imgFooter, _ = ebiten.NewImage(sx, y+12, ebiten.FilterDefault)
-		ui.imgFooter.Fill(color.NRGBA{0xCE, 0x9C, 0x72, 0xff})
 	}
+	ui.imgFooter.Fill(color.NRGBA{0xCE, 0x9C, 0x72, uint8(halfa)})
 	op.GeoM.Translate(0, float64(sy)-44)
 
-	text.Draw(ui.imgFooter, backDesc, ui.arcadeFontDesc, x, y, color.Black)
+	text.Draw(ui.imgFooter, backDesc, ui.arcadeFontDesc, x, y, color.NRGBA{0x00, 0x00, 0x00, uint8(halfa)})
 	screen.DrawImage(ui.imgFooter, op)
 }
 
-func (ui *UICredits) drawScroll(screen *ebiten.Image) {
+func (ui *UICredits) drawScroll(screen *ebiten.Image, alfa float64) {
+	halfa := 0xff * alfa
+
 	screenWidth, _ := screen.Size()
 	op := &ebiten.DrawImageOptions{}
-	sx, _ := ebiten.WindowSize()
+	sx, sy := ebiten.WindowSize()
 	if ui.imgScroll == nil {
-		ui.imgScroll, _ = ebiten.NewImage(sx, maxScrollView, ebiten.FilterDefault)
-		ui.imgScroll.Fill(color.NRGBA{0xff, 0xff, 0xff, 0x00}) //Imagen con alfa = 0 (transparente)
+		ui.imgScroll, _ = ebiten.NewImage(sx, maxScrollSize, ebiten.FilterDefault)
 	}
-	op.GeoM.Translate(0, ui.descPosY)
+	ui.imgScroll.Fill(color.NRGBA{0xCE, 0x9C, 0x72, uint8(halfa)})
+
+	_, headerHeight := ui.imgHeader.Size()
+	_, footerHeight := ui.imgFooter.Size()
+
+	// posición debajo de la cabecera.
+	op.GeoM.Translate(0, float64(headerHeight))
 
 	//Descriptions.
 	//.:Codigo, sonido y fx.
@@ -155,9 +173,21 @@ func (ui *UICredits) drawScroll(screen *ebiten.Image) {
 
 		x := (screenWidth - ll) / 2
 		y := (2 + 2*i) * fzdescription
-		text.Draw(ui.imgScroll, desc, ui.arcadeFontDesc, x, y, color.Black)
+		text.Draw(ui.imgScroll, desc, ui.arcadeFontDesc, x, y, color.NRGBA{0x00, 0x00, 0x00, uint8(halfa)})
 	}
-	screen.DrawImage(ui.imgScroll, op)
+
+	//Ventana del scroll
+	ui.scrollViewHight = sy - headerHeight - footerHeight
+	if ui.scrollNormal {
+		screen.DrawImage(ui.imgScroll.SubImage(image.Rect(0, 0+int(ui.descPosY), sx, ui.scrollViewHight+int(ui.descPosY))).(*ebiten.Image), op)
+	} else {
+		op.GeoM.Translate(0, float64(ui.scrollViewHight)-ui.descPosY)
+		screen.DrawImage(ui.imgScroll.SubImage(image.Rect(0, 0, sx, 0+int(ui.descPosY))).(*ebiten.Image), op)
+	}
+
 }
 
-const maxScrollView int = 908
+const (
+	maxScrollSize    int     = 908
+	maxWaitTimeInSec float64 = 3
+)
