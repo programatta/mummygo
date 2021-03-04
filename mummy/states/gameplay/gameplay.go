@@ -97,6 +97,10 @@ func (g *GamePlay) ProcessEvents() {
 		g.player.LostLive()
 		g.nextState = gameover
 	}
+	if inpututil.IsKeyJustPressed(ebiten.Key2) {
+		g.oxygenConsumed += 5
+	}
+	//Fin para debug.
 
 	//Movimiento del player.
 	if !g.playerLeaveLevel {
@@ -208,24 +212,26 @@ func (g *GamePlay) Update(dt float64) {
 
 	//Consumo de oxigeno.
 	warnlevel := 0
-	g.oxygenConsumed += dt
-	if g.oxygenConsumed >= 100 {
-		g.player.LostLive()
-		isGameOver := g.player.Lives() == 0
-		if !isGameOver {
-			w, h := ebiten.WindowSize()
-			g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
-			g.oxygenConsumed = 0
+	if g.currentState == playing {
+		g.oxygenConsumed += dt * g.levels[g.currentLevel-1].ConsumeOxygenFactor
+		if g.oxygenConsumed >= 100 {
+			g.player.LostLive()
+			isGameOver := g.player.Lives() == 0
+			if !isGameOver {
+				w, h := ebiten.WindowSize()
+				g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
+				g.oxygenConsumed = 0
+			} else {
+				g.nextState = gameover
+				g.oxygenConsumed = 100
+			}
 		} else {
-			g.nextState = gameover
-			g.oxygenConsumed = 100
-		}
-	} else {
-		if g.oxygenConsumed > 50 {
-			warnlevel = 1
-		}
-		if g.oxygenConsumed > 75 {
-			warnlevel = 2
+			if g.oxygenConsumed > 50 {
+				warnlevel = 1
+			}
+			if g.oxygenConsumed > 75 {
+				warnlevel = 2
+			}
 		}
 	}
 
@@ -268,18 +274,51 @@ func (g *GamePlay) Update(dt float64) {
 			g.alpha += dt
 		} else {
 			g.alpha = 1
-			//cargar un nuevo nivel.
-			ch := make(chan bool)
-			go func(ch chan bool) {
-				levelup := g.soundmgr.Sound("levelup.wav")
-				levelup.Rewind()
-				levelup.Play()
-				ch <- true
-			}(ch)
 
-			<-ch
-			close(ch)
-			g.prepareLevel(false)
+			if g.chgameover == nil {
+				g.chgameover = make(chan bool)
+
+				//cargar un nuevo nivel.
+				ch := make(chan bool)
+				go func(ch chan bool) {
+					levelup := g.soundmgr.Sound("levelup.wav")
+					levelup.Rewind()
+					levelup.Play()
+					ch <- true
+				}(ch)
+				<-ch
+				close(ch)
+
+				go func(ch chan bool) {
+					delta := 0.25
+					velinc := 1.0
+
+					//Cogemos la parte entera y la volvemos a pasar a float.
+					g.oxygenConsumed = float64(int(g.oxygenConsumed))
+					for g.oxygenConsumed < 100 {
+						delta -= dt * velinc
+						if delta <= 0 {
+							delta = 0.25
+							g.oxygenConsumed++
+							g.score += 25
+							velinc += 0.25
+						}
+						ch <- true
+					}
+					delta = 1
+					for delta > 0 {
+						delta -= dt
+						ch <- true
+					}
+					ch <- false
+					close(ch)
+				}(g.chgameover)
+			}
+			counting, _ := <-g.chgameover
+			if !counting {
+				g.chgameover = nil
+				g.prepareLevel(false)
+			}
 		}
 	}
 	if g.currentState == victorylevel {
@@ -354,7 +393,26 @@ func (g *GamePlay) Draw(screen *ebiten.Image) {
 		break
 
 	case nextlevel:
-		fallthrough
+		g.fadeToBlack(screen)
+		if g.alpha == 1 {
+			uistring := fmt.Sprint("BONUS")
+			uiscore := fmt.Sprintf("BY OXYGEN:%d%% - SCORE:%d", 100-int(g.oxygenConsumed), g.score)
+			fontSize := 18
+			screenWidth, screenHeight := screen.Size()
+
+			//texto: you win!
+			x := (screenWidth - len(uistring)*fontSize) / 2
+			y := (screenHeight - fontSize) / 2
+			font := g.fontsloader.GetFont("BarcadeBrawl.ttf", 72, 18)
+			text.Draw(screen, uistring, font, x, y, color.White)
+
+			//texto: your score xxxx.
+			x2 := (screenWidth - len(uiscore)*fontSize) / 2
+			y2 := (screenHeight + fontSize*2) / 2
+			text.Draw(screen, uiscore, font, x2, y2, color.White)
+		}
+		break
+
 	case exit:
 		fallthrough
 	case end:

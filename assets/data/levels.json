@@ -4,43 +4,50 @@
             "id":1,
             "mummies":2,
             "spells":0,
-            "potions":1
+            "potions":1,
+            "consume_oxygen_factor":0.45
         },
         {
             "id":2,
             "mummies":3,
             "spells":0,
-            "potions":1
+            "potions":1,
+            "consume_oxygen_factor":0.47
         },
         {
             "id":3,
             "mummies":4,
             "spells":0,
-            "potions":2
+            "potions":2,
+            "consume_oxygen_factor":0.5
         },
         {
             "id":4,
             "mummies":4,
             "spells":1,
-            "potions":2
+            "potions":2,
+            "consume_oxygen_factor":0.52
         },
         {
             "id":5,
             "mummies":5,
             "spells":1,
-            "potions":3
+            "potions":3,
+            "consume_oxygen_factor":0.6
         },
         {
             "id":6,
             "mummies":5,
             "spells":2,
-            "potions":3
+            "potions":3,
+            "consume_oxygen_factor":0.7
         },
         {
             "id":7,
             "mummies":6,
             "spells":2,
-            "potions":3
+            "potions":3,
+            "consume_oxygen_factor":0.7
         }
     ]
 }
