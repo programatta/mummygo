@@ -10,8 +10,11 @@ Pequeño remake del juego [Oh Mummy](https://www.youtube.com/watch?v=Ls5AGwkRNz0
 ## TODO
 * Check points para que las momias sean un poco mas listas (haciendo uso de pathfinding).
 * Añadir estados en el propio juego que nos permita pasar de playing, gameover, nextlevel
-* Añadir una barra de tiempo (similar a la que tenia Manic-Miner)
 
+## 20210304.
+* Se añade funcionalidad para establecer iconos representativos de las vidas, pociones y elementos a recoger en el UI del juego.
+* Se añade funcionalidad para dibujar una barra de tiempo (similar a la que tenia Manic-Miner)
+    * __Nota__:WIP (puede ser nivel de hidratación y premiar con botellas de agua, que se consuma más rápido cuando el jugador se mueve y menos rápido si está parado, pero siempre se consume).
 ## 20210303.
 * Se añade funcionalidad para mejorar las transiciones de pantallas a un fundido en negro (fadein/fadeout)
 * Se añade icono de al aplicación.

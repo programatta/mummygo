@@ -40,6 +40,7 @@ type GamePlay struct {
 	alpha            float64
 	goimgblack       *ebiten.Image
 	levels           []gamelevel.GameLevel
+	oxygenConsumed   float64
 }
 
 //NewGamePlay es el constructor
@@ -52,7 +53,7 @@ func NewGamePlay(spriteSheet *utils.SpriteSheet, fontsloader *utils.FontsLoader,
 	g.soundmgr = soundmgr
 
 	//Creamos el UI del juego (TODO: colocar iconos)
-	g.uigame = NewUIGame(fontsloader)
+	g.uigame = NewUIGame(fontsloader, g.spriteSheet)
 
 	//Creamos el escenario.
 	g.stage = stage.NewStage(g.spriteSheet, g.soundmgr, g)
@@ -152,6 +153,7 @@ func (g *GamePlay) Update(dt float64) {
 						if !isGameOver {
 							w, h := ebiten.WindowSize()
 							g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
+							g.oxygenConsumed = 0
 						} else {
 							g.nextState = gameover
 						}
@@ -188,7 +190,7 @@ func (g *GamePlay) Update(dt float64) {
 				object.PickedUp()
 
 				g.player.AddObject(object)
-				if g.player.HasKeyAndPapyre() {
+				if g.player.HasKey() && g.player.HasPapyre() {
 					g.stage.OpenMainDoor()
 					g.isNextLevel = true
 					//Por completar el nivel incrementamos 500 puntos.
@@ -204,10 +206,36 @@ func (g *GamePlay) Update(dt float64) {
 		g.objects = objectsTmp[:copied]
 	}
 
+	//Consumo de oxigeno.
+	warnlevel := 0
+	g.oxygenConsumed += dt
+	if g.oxygenConsumed >= 100 {
+		g.player.LostLive()
+		isGameOver := g.player.Lives() == 0
+		if !isGameOver {
+			w, h := ebiten.WindowSize()
+			g.player.SetPosition((w-64)/2+16, (h-32)/2-16)
+			g.oxygenConsumed = 0
+		} else {
+			g.nextState = gameover
+			g.oxygenConsumed = 100
+		}
+	} else {
+		if g.oxygenConsumed > 50 {
+			warnlevel = 1
+		}
+		if g.oxygenConsumed > 75 {
+			warnlevel = 2
+		}
+	}
+
 	g.uigame.SetLives(g.player.Lives())
 	g.uigame.SetPotions(g.player.Potions())
 	g.uigame.SetLevel(g.currentLevel)
 	g.uigame.SetScore(g.score)
+	g.uigame.SetKey(g.player.HasKey())
+	g.uigame.SetPapyre(g.player.HasPapyre())
+	g.uigame.SetPercentOxigen(g.oxygenConsumed, warnlevel)
 
 	if g.currentState == gameover {
 		if g.alpha < 1 {
@@ -496,6 +524,7 @@ func (g *GamePlay) prepareLevel(isNew bool) {
 	g.goimgblack = nil
 	g.isNextLevel = false
 	g.playerLeaveLevel = false
+	g.oxygenConsumed = 0
 }
 
 func (g *GamePlay) loadLevels(filename string) {

@@ -349,9 +349,14 @@ func (p *Player) Reset() {
 	p.alpha = 1
 }
 
-//HasKeyAndPapyre devuelve true si el player ha cogido la llave y el papiro.
-func (p *Player) HasKeyAndPapyre() bool {
-	return p.hasKey && p.hasPapyre
+//HasKey devuelve true si ha cogido la llave.
+func (p *Player) HasKey() bool {
+	return p.hasKey
+}
+
+//HasPapyre devuelve true si ha cogido la el papiro.
+func (p *Player) HasPapyre() bool {
+	return p.hasPapyre
 }
 
 //Position devuelve los valores de X e Y del jugador.
